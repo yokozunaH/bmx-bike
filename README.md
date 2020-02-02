@@ -22,8 +22,7 @@
   git branch devel_XXX
   ```
 
-  Use `git checkout <branch-name>` to switch between
-  Use `git merge <branch-name>` to merge changes to the branch you have checked out.
+  Use `git checkout <branch-name>` to switch between branches and use `git merge <branch-name>` to merge changes from `<branch-name>` to the branch you have checked out.
 
   [If you have never used git before here is a lot of good info and some examples to help](http://robotics.mech.northwestern.edu/~elwin/git_intro.html)
 
