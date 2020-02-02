@@ -14,7 +14,7 @@
   git clone https://github.com/rencheckyoself/bmx-bike.git
   ```
 
-    If you haven't, send me your username so I can add you as a collaborator and give you edit permissions.
+  If you haven't, send me your username so I can add you as a collaborator and give you edit permissions.
 
 4. Create a development branch for yourself called `devel_XXX` where XXX are your initials. This is the branch where you will do all development and only push to `master` branch when the code is functional and tested.
 
