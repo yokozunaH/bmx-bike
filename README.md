@@ -34,4 +34,42 @@
 
 6. Grab one of the dev boards we have and test if you've set things up properly. You should be able to complete everything on Dan's page up unitl the `make flash` and `make screen` commands at the very bottom.
 
-**Before making a commit to master, reach out to team members so we don't overwrite any progress.** It's fixable, just a headache :) 
+
+
+## Development Workflow
+
+This is an outline for the general process we should all follow when starting to develop a new feature:
+
+First, make sure your local master branch is up to date with the remote master branch on github.com
+```
+git checkout master
+git fetch origin master
+git merge
+```
+
+Then merge any changes on to your development branch:
+
+```
+git checkout devel_XXX
+git merge master
+```
+
+Now your development branch has the most up to date functioning code and you can start developing. If someone pushes an update to the master branch while you are doing your development, follow the same process above and resolve any conflicts.
+
+Be sure to commit often during your development but only push your development branch stuff
+```
+git add <any new files or directories go here>
+git commit -a # type a commit message at the top of your text editor
+git push origin devel_XXX
+```
+
+Once you have finished and verified your development is functional, merge changes back to your local master branch and push to the online repository. **Before making a commit to master, ensure you don't have any unmerged changes and reach out to team members so we don't overwrite any progress.** It's fixable, just a headache :)
+
+```
+git checkout master
+git merge devel_XXX
+
+# Do a final check to make sure you will not be overwriting stuff on master
+
+git push origin master
+```
