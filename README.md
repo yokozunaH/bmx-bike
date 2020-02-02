@@ -33,3 +33,5 @@
 
 
 6. Grab one of the dev boards we have and test if you've set things up properly. You should be able to complete everything on Dan's page up unitl the `make flash` and `make screen` commands at the very bottom.
+
+**Before making a commit to master, reach out to team members so we don't overwrite any progress.** It's fixable, just a headache :) 
