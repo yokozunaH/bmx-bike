@@ -1,9 +1,6 @@
 #ifdef __TIVA_BNO055__
 #define __TIVA_BNO055__
 
-#include "bno055.h"
-
-
 /// \brief used read a vaile through i2c bus
 /// \param dev_address: the BNO055 address being used. This should be set in the BNO055_t struct.
 /// \param reg_address: the registart to be read. Each function in the BNO055 driver lib has this preset.

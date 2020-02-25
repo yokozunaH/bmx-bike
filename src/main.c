@@ -20,6 +20,7 @@ int main(void)
   ConfigureUART();
 
   InitI2C0();
+  init_imu();
 
   return 0;
 }
