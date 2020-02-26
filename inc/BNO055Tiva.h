@@ -1,5 +1,7 @@
-#ifdef __TIVA_BNO055__
-#define __TIVA_BNO055__
+#ifndef TIVA_BNO055_NU
+#define TIVA_BNO055_NU
+
+#include "bno055.h"
 
 /// \brief used read a vaile through i2c bus
 /// \param dev_address: the BNO055 address being used. This should be set in the BNO055_t struct.
@@ -27,6 +29,6 @@ s8 _imu_i2c_write(u8 dev_address, u8 reg_address, u8 *var_data, u8 count);
 void _ms_delay(u32 ms);
 
 /// \brief used to set the initialization struct needed by the BNO055 driver
-void init_imu(void);
+s8 init_imu(struct bno055_t *sensor);
 
 #endif

@@ -40,6 +40,7 @@
 /*              INCLUDES    */
 /*******************************************************/
 #include "bno055.h"
+extern void UARTprintf(const char *pcString, ...);
 
 #ifdef __KERNEL__
 #include <linux/types.h>
@@ -165,6 +166,7 @@ BNO055_RETURN_FUNCTION_TYPE bno055_init(struct bno055_t *bno055)
                                                &data_u8,
                                                BNO055_GEN_READ_WRITE_LENGTH);
     p_bno055->page_id = data_u8;
+
 
     return com_rslt;
 }
@@ -419,6 +421,8 @@ BNO055_RETURN_FUNCTION_TYPE bno055_write_page_id(u8 page_id_u8)
 {
     /* Variable used to return value of
      * communication routine*/
+
+
     BNO055_RETURN_FUNCTION_TYPE com_rslt = BNO055_ERROR;
     u8 data_u8r = BNO055_INIT_VALUE;
 
@@ -1876,6 +1880,7 @@ BNO055_RETURN_FUNCTION_TYPE bno055_read_quaternion_w(s16 *quaternion_w_s16)
     {
         /*condition check for page, chip id is
          * available in the page zero*/
+
         if (p_bno055->page_id != BNO055_PAGE_ZERO)
         {
             /* Write the page zero*/

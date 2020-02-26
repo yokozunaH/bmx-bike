@@ -11,14 +11,10 @@
 #include "driverlib/pin_map.h"
 #include "BNO055Tiva.h"
 #include "bno055.h"
-#include "driverlib/uart.h"
 
-
-extern void UARTprintf(const char *pcString, ...);
 
 s8 _imu_i2c_read(u8 dev_address, u8 reg_address, u8 *arr_data, u8 count)
 {
-  UARTprintf("Read Counts %d, \n", count);
   s8 comres = 0;
   // This function is used to select the device to read from
   // false == write to slave
@@ -68,16 +64,6 @@ s8 _imu_i2c_read(u8 dev_address, u8 reg_address, u8 *arr_data, u8 count)
 
     // put read data in data array
     arr_data[0] = I2CMasterDataGet(I2C0_BASE);
-
-    // Check for errors
-    if (I2CMasterErr(I2C0_BASE)==I2C_MASTER_ERR_NONE)
-    {
-      comres = 0; // success
-    }
-    else
-    {
-      comres = -1; // error occured
-    }
 
 
     // Read final byte from slave
@@ -167,7 +153,6 @@ s8 _imu_i2c_read(u8 dev_address, u8 reg_address, u8 *arr_data, u8 count)
 
 s8 _imu_i2c_write(u8 dev_address, u8 reg_address, u8 *var_data, u8 count)
 {
-    UARTprintf("Write Counts %d, \n", count);
     s8 comres = 0;
     // Tell the master module what address it will place on the bus when
     // communicating with the slave.
@@ -203,12 +188,6 @@ s8 _imu_i2c_write(u8 dev_address, u8 reg_address, u8 *var_data, u8 count)
       {
         comres = -1; // Error
       }
-
-      UARTprintf("Write Err %x, \n", I2CMasterErr(I2C0_BASE));
-      UARTprintf("ERR ADDR ACK %x, \n", I2C_MASTER_ERR_ADDR_ACK);
-      UARTprintf("ERR DATA ACK %x, \n", I2C_MASTER_ERR_DATA_ACK);
-      UARTprintf("ERR ARB LOST %x, \n", I2C_MASTER_ERR_ARB_LOST);
-
     }
     else
     {
@@ -223,16 +202,17 @@ void _ms_delay(u32 ms)
   SysCtlDelay(ms * 5334); // 16000000MHz/3000 ~= 5334 assembly commands per ms
 }
 
-s8 init_imu(struct bno055_t *sensor)
+s8 init_imu(void)
 {
   // initialize setup struct and populate the required information
+  struct bno055_t sensor;
   s8 err = 0;
-  sensor->bus_write = _imu_i2c_write;
-  sensor->bus_read = _imu_i2c_read;
-  sensor->delay_msec = _ms_delay;
-  sensor->dev_addr = BNO055_I2C_ADDR1;
+  sensor.bus_write = _imu_i2c_write;
+  sensor.bus_read = _imu_i2c_read;
+  sensor.delay_msec = _ms_delay;
+  sensor.dev_addr = BNO055_I2C_ADDR1;
 
   // bno055 builtin initialization function
-  err = bno055_init(sensor);
+  err = bno055_init(&sensor);
   return err;
 }

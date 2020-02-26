@@ -25,6 +25,7 @@
 #include "i2cTiva.h"
 #include "uartTiva.h"
 
+
 int main(void)
 {
 
@@ -45,30 +46,18 @@ int main(void)
   ConfigureUART();
 
   UARTprintf("Hello, world!\n");
+  InitI2C0();
   UARTprintf("Err1, %d, \n", comres);
 
-  InitI2C0();
-  UARTprintf("Err2, %d, \n", comres);
+  u8 data = 7;
 
-  struct bno055_t imu_board;
-
-  comres = init_imu(&imu_board);
-  UARTprintf("Err3, %d, \n", comres);
-
-  // Set to 9 DOF mode -- REMEMBER TO CALIBRATE MAGNETOMETOR BY MOVING IN FIGURE 8
-  comres = bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
-
-  s16 w_val = 0;
-  while(1){
-
-  // UARTprintf("Err4, %d, \n", comres);
-
-
-  comres = bno055_read_quaternion_w(&w_val);
-
-  // UARTprintf("Err, %d, \n", comres);
-  UARTprintf("w: %d, \n", w_val);
+  while(1)
+  {
+    comres = _imu_i2c_write(0x08, 0x08, &data, 1);
+    UARTprintf("Err2, %d, \n", comres);
   }
+
+
 
   return 0;
 }
