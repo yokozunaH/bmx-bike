@@ -62,8 +62,8 @@ CFLAGS += -fsingle-precision-constant
 CFLAGS +=-Os -ffunction-sections -fdata-sections -MD -std=c99 -Wall
 CFLAGS += -pedantic -DPART_$(MCU) -c -I$(TIVAWARE_PATH) -I$(INCDIR)
 CFLAGS += -DTARGET_IS_BLIZZARD_RA1
+CFLAGS += -lm
 LDFLAGS = --entry ResetISR --gc-sections -T$(LD_SCRIPT)
-
 #######################################
 # end of user configuration
 #######################################

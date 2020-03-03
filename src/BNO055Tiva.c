@@ -18,7 +18,7 @@ extern void UARTprintf(const char *pcString, ...);
 
 s8 _imu_i2c_read(u8 dev_address, u8 reg_address, u8 *arr_data, u8 count)
 {
-  UARTprintf("Read Counts %d, \n", count);
+  // UARTprintf("Read Counts %d, \n", count);
   s8 comres = 0;
   // This function is used to select the device to read from
   // false == write to slave
@@ -98,76 +98,56 @@ s8 _imu_i2c_read(u8 dev_address, u8 reg_address, u8 *arr_data, u8 count)
 
   }
 
-  // Read in 4 bytes
+  // Read in more than 2 bytes
   else
   {
-    // Start reading bytes from the slave
-    I2CMasterSlaveAddrSet(I2C0_BASE, dev_address, true);
-    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_START);
-    while(I2CMasterBusy(I2C0_BASE));
-    // put read data in data array
-    arr_data[0] = I2CMasterDataGet(I2C0_BASE);
+    for(u8 i = 0; i < count; i++)
+    {
+      if(i == 0)
+      {
+        // Start Communication
+        I2CMasterSlaveAddrSet(I2C0_BASE, dev_address, true);
+        I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_START);
+        // UARTprintf("Start ");
+      }
+      else if(i == count -1)
+      {
+        // Read the last byte
+        I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+        // UARTprintf(" End\n");
+      }
+      else
+      {
+        // read middle byte
+        I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+        // UARTprintf(" Cont ");
+      }
 
-    if (I2CMasterErr(I2C0_BASE)==I2C_MASTER_ERR_NONE)
-    {
-      comres = 0; // success
-    }
-    else
-    {
-      comres = -1; // error occured
-    }
+      while(I2CMasterBusy(I2C0_BASE));
 
-    // Read in second byte
-    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
-    while(I2CMasterBusy(I2C0_BASE));
-    // put read data in data array
-    arr_data[1] = I2CMasterDataGet(I2C0_BASE);
+      // put read data in data array
+      arr_data[i] = I2CMasterDataGet(I2C0_BASE);
 
-    if (I2CMasterErr(I2C0_BASE)==I2C_MASTER_ERR_NONE)
-    {
-      comres = 0; // success
-    }
-    else
-    {
-      comres = -1; // error occured
-    }
-
-    // Read in third byte
-    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
-    while(I2CMasterBusy(I2C0_BASE));
-    // put read data in data array
-    arr_data[2] = I2CMasterDataGet(I2C0_BASE);
-
-    if (I2CMasterErr(I2C0_BASE)==I2C_MASTER_ERR_NONE)
-    {
-      comres = 0; // success
-    }
-    else
-    {
-      comres = -1; // error occured
-    }
-
-    // Read final byte from slave
-    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
-    while(I2CMasterBusy(I2C0_BASE));
-    // put read data in data array
-    arr_data[3] = I2CMasterDataGet(I2C0_BASE);
-
-    if (I2CMasterErr(I2C0_BASE)==I2C_MASTER_ERR_NONE)
-    {
-      comres = 0; // success
-    }
-    else
-    {
-      comres = -1; // error occured
+      if (I2CMasterErr(I2C0_BASE)==I2C_MASTER_ERR_NONE)
+      {
+        comres = 0; // success
+      }
+      else
+      {
+        comres = -1; // error occured, end comms and exit
+        I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+        while(I2CMasterBusy(I2C0_BASE));
+        i = count;
+      }
     }
   }
+
   return comres;
 }
 
 s8 _imu_i2c_write(u8 dev_address, u8 reg_address, u8 *var_data, u8 count)
 {
-    UARTprintf("Write Counts %d, \n", count);
+    // UARTprintf("Write Counts %d, \n", count);
     s8 comres = 0;
     // Tell the master module what address it will place on the bus when
     // communicating with the slave.
@@ -236,3 +216,12 @@ s8 init_imu(struct bno055_t *sensor)
   err = bno055_init(sensor);
   return err;
 }
+
+// s8 calibration_status(u8 *calibration_arr)
+// {
+//   s8 comres = 0;
+//
+//   comres += bno055_get_mag_calib_stat(calibration_arr);
+//
+//
+// }

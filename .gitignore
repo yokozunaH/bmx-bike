@@ -3,3 +3,4 @@ Makefile
 /BNO055_driver
 /arduino_test
 /pololu_imu
+/IMU_math
