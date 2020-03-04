@@ -5,6 +5,10 @@
 #ifndef BMX_QUATERNION_HG
 #define BMX_QUATERNION_HG
 
+/// \def QUATERNION_SCALING
+/// \brief scale raw quaternion output by 2^14 per documentation
+#define QUATERNION_SCALING 16384
+
 #include "bno055.h"
 
 /// \brief Calculate the magnitude of a quaternion.

@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
 #include "bno055.h"
-#include "quaternion.h"
+#include "bmx_quaternion.h"
 
 
 float magnitude(struct bno055_quaternion_t *q)

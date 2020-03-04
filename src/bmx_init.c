@@ -2,8 +2,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "inc/hw_i2c.h"
 #include "inc/hw_gpio.h"
+#include "inc/hw_i2c.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 
@@ -16,7 +16,25 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
 
-void ConfigureUART(void)
+#include "utils/uartstdio.h"
+
+#include "bmx_init.h"
+
+void InitializeTiva()
+{
+  // Enable lazy stacking for interrupt handlers.  This allows floating-point
+  // instructions to be used within interrupt handlers, but at the expense of
+  // extra stack usage.
+  FPULazyStackingEnable();
+
+  // Set the clocking to run directly from the crystal.
+  SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
+
+  ConfigureUART();
+  ConfigureI2C();
+}
+
+void ConfigureUART()
 {
 
     // Enable the GPIO Peripheral used by the UART.
@@ -38,7 +56,7 @@ void ConfigureUART(void)
 }
 
 
-void ConfigureI2C(void)
+void ConfigureI2C()
 {
     /*
       See section 15 and 17 of the TivaWare™ Peripheral Driver Library for more usage info.

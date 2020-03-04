@@ -8,7 +8,7 @@
 /// \brief Represents a float using 2 integers. Used for printing floats to UART
 /// \param input: the floating point number
 /// \param *output: pointer to an array of 2 integers to store the converted representation
-/// \param dec: number of decimal places to save. Must be <=6
+/// \param dec: number of decimal places to save. Must be 1>= && <=6
 void float_to_2ints(float input, int *output, unsigned int dec);
 
 #endif

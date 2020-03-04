@@ -28,9 +28,9 @@
 
 ## Get you Computer set up:
 
-1. Follow these [instructions](https://github.com/dlynch7/Tiva_Make#tiva_make) to get all of the stuff you need to build the source code. This is a separate directory from the actually project folder.
+1. Follow these [instructions](https://github.com/dlynch7/Tiva_Make#tiva_make) to get all of the stuff you need to build the source code. This is a separate directory from the actual project folder.
 
-2. Create a new directory on you computer to hold the project code. I called mine `bmx_bike`
+2. Create a new directory on you computer to hold the project code. I called mine `bmx_bike`.
 
 3. Set up your git stuff:
 
