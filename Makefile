@@ -50,6 +50,7 @@ OUTDIR = build
 
 
 LDLIBS = -L$(DRIVERLIB_PATH) -ldriver
+LDLIBS += -L$(HOME)/Embedded/gcc-arm-none-eabi-5_4-2016q3/arm-none-eabi/lib/fpu -lm -lc
 
 # LD_SCRIPT: linker script
 LD_SCRIPT = $(MCU).ld
@@ -62,7 +63,6 @@ CFLAGS += -fsingle-precision-constant
 CFLAGS +=-Os -ffunction-sections -fdata-sections -MD -std=c99 -Wall
 CFLAGS += -pedantic -DPART_$(MCU) -c -I$(TIVAWARE_PATH) -I$(INCDIR)
 CFLAGS += -DTARGET_IS_BLIZZARD_RA1
-CFLAGS += -lm
 LDFLAGS = --entry ResetISR --gc-sections -T$(LD_SCRIPT)
 #######################################
 # end of user configuration

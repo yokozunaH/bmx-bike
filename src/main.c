@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include "inc/hw_i2c.h"
 #include "inc/hw_memmap.h"
@@ -79,8 +80,7 @@ int main(void)
     // z_dec = eul_z*1000 - z_int*1000;
     // x_int = (int) eul_x;
     // x_dec = eul_x*1000 - x_int*1000;
-    // y_int = (int) eul_y;
-    // y_dec = eul_y*1000 - y_int*1000;
+
 
     comres += bno055_read_quaternion_wxyz(&q);
     scale_divide(&q, 16384); // scale by 2^14 per documentation

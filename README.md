@@ -1,6 +1,31 @@
 # BMX Bike Robot Team Repo
 
 
+## Folder Structure
+```
+.
+├── inc
+│   ├── bmx_imu.h - BNO055 IMU to Tiva
+│   ├── bmx_init.h - Tiva Initializations
+│   ├── bmx_masterconfig.h - Config Settings
+│   ├── bmx_quaternion.h - Quaternion Math
+│   ├── bmx_utilities.h - General Functions
+│   └── bno055.h - BNO055 driver from Bosch
+├── Makefile
+├── README.md
+├── src
+│   ├── bmx_imu.c
+│   ├── bmx_init.c
+│   ├── bmx_quaternion.c
+│   ├── bmx_utilities.c
+│   ├── bno055.c
+│   ├── main.c - Main Run File
+│   ├── startup_gcc.c - Tivaware
+│   └── uartstdio.c - Tivaware
+└── TM4C123GH6PM.ld
+```
+
+
 ## Get you Computer set up:
 
 1. Follow these [instructions](https://github.com/dlynch7/Tiva_Make#tiva_make) to get all of the stuff you need to build the source code. This is a separate directory from the actually project folder.
@@ -35,7 +60,7 @@
 
 
 
-## Development Workflow
+## How to use Git for this project
 
 This is an outline for the general process we should all follow when starting to develop a new feature. [If you have never used git before here is a lot of good info and some examples to help](http://robotics.mech.northwestern.edu/~elwin/git_intro.html)
 

@@ -1,21 +1,48 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
+
 #include "inc/hw_i2c.h"
+#include "inc/hw_gpio.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
-#include "inc/hw_gpio.h"
-#include "driverlib/i2c.h"
-#include "driverlib/sysctl.h"
+
+#include "driverlib/debug.h"
+#include "driverlib/fpu.h"
 #include "driverlib/gpio.h"
+#include "driverlib/i2c.h"
 #include "driverlib/pin_map.h"
+#include "driverlib/rom.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/uart.h"
 
-/*
-  See section 15 and 17 of the TivaWare™ Peripheral Driver Library for more usage info.
-*/
-
-void InitI2C0(void)
+void ConfigureUART(void)
 {
+
+    // Enable the GPIO Peripheral used by the UART.
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+
+    // Enable UART0
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+
+    // Configure GPIO Pins for UART mode.
+    GPIOPinConfigure(GPIO_PA0_U0RX);
+    GPIOPinConfigure(GPIO_PA1_U0TX);
+    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    // Use the internal 16MHz oscillator as the UART clock source.
+    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+
+    // Initialize the UART for console I/O.
+    UARTStdioConfig(0, 115200, 16000000);
+}
+
+
+void ConfigureI2C(void)
+{
+    /*
+      See section 15 and 17 of the TivaWare™ Peripheral Driver Library for more usage info.
+    */
     //enable I2C module 0
     SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C0);
 
