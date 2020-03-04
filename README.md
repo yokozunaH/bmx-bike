@@ -40,9 +40,9 @@
   git remote add upstream https://github.com/NU-BMX-Bike-Robot/bmx-bike.git  
   ```
 
-  This repository should be considered master. So the code in here should always be the most function, up-to-date code.
+  This repository should be considered master. So the code in here should always be the most functional, up-to-date code.
 
-4. Next create your development repository. Go the the [team repository](https://github.com/NU-BMX-Bike-Robot/bmx-bike.git) and create a fork, this will be your development area and should show up on your personal github page. After you have created the fork run the following commands:
+4. Next create your development repository. Go the the [team repository](https://github.com/NU-BMX-Bike-Robot/bmx-bike.git) and create a fork. This will be your development area and should show up on your personal github page. After you have created the fork run the following commands:
 
   ```
   cd ~/bmx_bike # or whatever you called it
@@ -53,10 +53,10 @@
 
 5. Edit the makefile to match the locations for everything installed in step 1.
 
- - I have added the Makefile to the .gitignore list as not not overwrite for people developing on different OS. If you make any required changes to that please inform everyone.
+ - I have added the Makefile to the .gitignore list as not to overwrite for people developing on different OS. If you make any required changes to that please inform everyone.
 
 
-6. Grab one of the dev boards we have and test if you've set things up properly. You should be able to complete everything on Dan's page up unitl the `make flash` and `make screen` commands at the very bottom.
+6. Grab one of the dev boards we have and test if you've set things up properly. You should be able to complete everything on Dan's page up until the `make flash` and `make screen` commands at the very bottom.
 
 
 
@@ -72,7 +72,7 @@ git merge
 
 Now your local files have the most up to date functioning code and you can start developing. If someone pushes an update to upstream while you are doing your development, follow the same process above and resolve any merge conflicts.
 
-Be sure to commit often during your development but only push your development repository.
+Be sure to commit often during your development but only push to your development repository.
 ```
 git add <any new files or directories go here>
 git commit -a # type a commit message at the top of your text editor
