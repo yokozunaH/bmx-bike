@@ -4,6 +4,10 @@
 ## Folder Structure
 ```
 .
+├── HelloWorld - For setup instructions
+│   ├── main.c
+│   ├── startup_gcc.c
+│   └── uartstdio.c
 ├── inc
 │   ├── bmx_imu.h - BNO055 IMU to Tiva
 │   ├── bmx_init.h - Tiva Initializations
@@ -24,7 +28,6 @@
 │   └── uartstdio.c - Tivaware
 └── TM4C123GH6PM.ld
 ```
-
 
 ## Get you Computer set up:
 
