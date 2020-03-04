@@ -1,6 +1,6 @@
 Makefile
-/build
-/BNO055_driver
-/arduino_test
-/pololu_imu
-/IMU_math
+/arduino_test/*
+/build/*
+/BNO055_driver/*
+/pololu_imu/*
+/IMU_math/*
