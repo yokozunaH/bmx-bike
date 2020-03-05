@@ -1,182 +1,69 @@
-//*****************************************************************************
-//
-// main.c - Simple hello world example.
-//
-// Copyright (c) 2012-2017 Texas Instruments Incorporated.  All rights reserved.
-// Software License Agreement
-//
-// Texas Instruments (TI) is supplying this software for use solely and
-// exclusively on TI's microcontroller products. The software is owned by
-// TI and/or its suppliers, and is protected under applicable copyright
-// laws. You may not combine this software with "viral" open-source
-// software in order to form a larger program.
-//
-// THIS SOFTWARE IS PROVIDED "AS IS" AND WITH ALL FAULTS.
-// NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY, INCLUDING, BUT
-// NOT LIMITED TO, IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE APPLY TO THIS SOFTWARE. TI SHALL NOT, UNDER ANY
-// CIRCUMSTANCES, BE LIABLE FOR SPECIAL, INCIDENTAL, OR CONSEQUENTIAL
-// DAMAGES, FOR ANY REASON WHATSOEVER.
-//
-// This is part of revision 2.1.4.178 of the EK-TM4C123GXL Firmware Package.
-//
-//*****************************************************************************
-
-#include <math.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
-//#include <string.h>
+#include <stdint.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <math.h>
 
+#include "inc/hw_gpio.h"
+#include "inc/hw_i2c.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
+
 #include "driverlib/debug.h"
 #include "driverlib/fpu.h"
 #include "driverlib/gpio.h"
+#include "driverlib/i2c.h"
 #include "driverlib/pin_map.h"
 #include "driverlib/rom.h"
 #include "driverlib/sysctl.h"
 #include "driverlib/uart.h"
+
 #include "utils/uartstdio.h"
 
-//*****************************************************************************
-//
-//! A very simple ``hello world'' example.  It simply displays ``Hello World!''
-//! on the UART and is a starting point for more complicated applications.
-//!
-//! UART0, connected to the Virtual Serial Port and running at
-//! 115,200, 8-N-1, is used to display messages from this application.
-//
-//*****************************************************************************
+#include "bno055.h"
+#include "bmx_imu.h"
+#include "bmx_init.h"
+#include "bmx_quaternion.h"
+#include "bmx_utilities.h"
 
-//*****************************************************************************
-//
-// The error routine that is called if the driver library encounters an error.
-//
-//*****************************************************************************
-#ifdef DEBUG
-void
-__error__(char *pcFilename, uint32_t ui32Line)
+int main(void)
 {
-}
-#endif
 
-//*****************************************************************************
-//
-// Configure the UART and its pins.  This must be called before UARTprintf().
-//
-//*****************************************************************************
-void
-ConfigureUART(void)
-{
-    //
-    // Enable the GPIO Peripheral used by the UART.
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
+  InitializeTiva();
 
-    //
-    // Enable UART0
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+  s8 comres = 0;
+  struct bno055_t imu_board;
 
-    //
-    // Configure GPIO Pins for UART mode.
-    //
-    GPIOPinConfigure(GPIO_PA0_U0RX);
-    GPIOPinConfigure(GPIO_PA1_U0TX);
-    GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+  comres += init_imu(&imu_board);
 
-    //
-    // Use the internal 16MHz oscillator as the UART clock source.
-    //
-    UARTClockSourceSet(UART0_BASE, UART_CLOCK_PIOSC);
+  // Set to 9 DOF mode
+  comres += bno055_set_operation_mode(BNO055_OPERATION_MODE_NDOF);
 
-    //
-    // Initialize the UART for console I/O.
-    //
-    UARTStdioConfig(0, 115200, 16000000);
-}
+  u8 gyro_cal = 0, acc_cal = 0, mag_cal = 0, sys_cal = 0;
 
-//*****************************************************************************
-//
-// Print "Hello World!" to the UART on the evaluation board.
-//
-//*****************************************************************************
-int
-main(void)
-{
-    //volatile uint32_t ui32Loop;
+  struct bno055_quaternion_t q;
+  struct bno055_euler_float_t ea;
+  int xang[2], yang[2], zang[2];
 
-    //
-    // Enable lazy stacking for interrupt handlers.  This allows floating-point
-    // instructions to be used within interrupt handlers, but at the expense of
-    // extra stack usage.
-    //
-    FPULazyStackingEnable();
+  while(1)
+  {
+    comres += bno055_get_gyro_calib_stat(&gyro_cal);
+    comres += bno055_get_mag_calib_stat(&mag_cal);
+    comres += bno055_get_accel_calib_stat(&acc_cal);
+    comres += bno055_get_sys_calib_stat(&sys_cal);
 
-    //
-    // Set the clocking to run directly from the crystal.
-    //
-    SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ |
-                       SYSCTL_OSC_MAIN);
+    comres += bno055_read_quaternion_wxyz(&q);
+    scale_divide(&q, QUATERNION_SCALING);
+    normalize(&q);
 
-    //
-    // Enable the GPIO port that is used for the on-board LED.
-    //
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+    ea = toEuler(&q);
 
-    //
-    // Enable the GPIO pins for the LED (PF2 & PF3).
-    //
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_2);
-    GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_3);
+    float_to_2ints(ea.r, xang, 3);
+    float_to_2ints(ea.p, yang, 3);
+    float_to_2ints(ea.h, zang, 3);
 
-    //
-    // Initialize the UART.
-    //
-    ConfigureUART();
+    UARTprintf("%d.%d  %d.%d  %d.%d  %d  %d  %d  %d  \n", xang[0], xang[1], yang[0], yang[1], zang[0], zang[1], gyro_cal, mag_cal, acc_cal, sys_cal);
+  }
 
-    //
-    // Hello!
-    //
-    UARTprintf("Hello, world!\n");
-
-    // do some unnecessary floating-point math to see if the Makefile works:
-    float foo;
-    foo = 3.0/2.0;
-    UARTprintf("(int) foo = %d.\n",(int)foo);
-
-    //
-    // We are finished.  Hang around doing nothing.
-    //
-    while(1)
-    {
-        //
-        // Turn on the LED.
-        //
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, GPIO_PIN_2);
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, GPIO_PIN_3);
-
-        //
-        // Delay for a bit.
-        //
-        SysCtlDelay(SysCtlClockGet() / 10 / 3);
-
-        //
-        // Turn off the BLUE LED.
-        //
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_2, 0);
-        GPIOPinWrite(GPIO_PORTF_BASE, GPIO_PIN_3, 0);
-
-        //
-        // Delay for a bit.
-        //
-        SysCtlDelay(SysCtlClockGet() / 10 / 3);
-
-        //
-        // Hello!
-        //
-        UARTprintf("Hello, world!\n");
-
-    }
+  return 0;
 }
