@@ -78,6 +78,8 @@ void ConfigureI2C()
     //enable I2C module 0
     SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C0);
 
+//    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_I2C0)) {}
+
     //reset module
     SysCtlPeripheralReset(SYSCTL_PERIPH_I2C0);
 

@@ -5,20 +5,30 @@
 #include "bno055.h"
 #include "bmx_quaternion.h"
 
+Quaternion bnoquat_to_float(struct bno055_quaternion_t *q)
+{
+    Quaternion qf;
 
-float magnitude(struct bno055_quaternion_t *q)
+    qf.x = (float) q->x;
+    qf.y = (float) q->y;
+    qf.z = (float) q->z;
+    qf.w = (float) q->w;
+    return qf;
+}
+
+float magnitude(Quaternion *q)
 {
     return sqrtf(q->w*q->w + q->x*q->x + q->y*q->y + q->z*q->z);
 }
 
-void normalize(struct bno055_quaternion_t *q)
+void normalize(Quaternion *q)
 {
 
   float mag = magnitude(q);
   scale_divide(q, mag);
 }
 
-void scale_divide(struct bno055_quaternion_t *q, float val)
+void scale_divide(Quaternion *q, float val)
 {
   q->w /= val;
   q->x /= val;
@@ -26,7 +36,7 @@ void scale_divide(struct bno055_quaternion_t *q, float val)
   q->z /= val;
 }
 
-struct bno055_euler_float_t toEuler(struct bno055_quaternion_t *q)
+struct bno055_euler_float_t toEuler(Quaternion *q)
 {
   struct bno055_euler_float_t ea;
 

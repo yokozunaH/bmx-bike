@@ -102,7 +102,8 @@ s8 _imu_i2c_read(u8 dev_address, u8 reg_address, u8 *arr_data, u8 count)
   // Read in more than 2 bytes
   else
   {
-    for(u8 i = 0; i < count; i++)
+    u8 i;
+    for(i = 0; i < count; i++)
     {
       if(i == 0)
       {
