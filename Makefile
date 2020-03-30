@@ -56,14 +56,17 @@ LDLIBS += -L$(HOME)/Embedded/gcc-arm-none-eabi-5_4-2016q3/arm-none-eabi/lib/fpu 
 LD_SCRIPT = $(MCU).ld
 
 # define flags
-CFLAGS = -g -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+CFLAGS = -g -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -march=armv7e-m
 # commented out: floating point flag
-CFLAGS += -fsingle-precision-constant
+# CFLAGS += -fsingle-precision-constant
 # CFLAGS = -g -mthumb -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=softfp
 CFLAGS +=-Os -ffunction-sections -fdata-sections -MD -std=c99 -Wall
 CFLAGS += -pedantic -DPART_$(MCU) -c -I$(TIVAWARE_PATH) -I$(INCDIR)
-CFLAGS += -DTARGET_IS_BLIZZARD_RA1
+# CFLAGS += -DTARGET_IS_BLIZZARD_RA1
+CFLAGS += -DTARGET_IS_TM4C123_RB2
 LDFLAGS = --entry ResetISR --gc-sections -T$(LD_SCRIPT)
+# LDFLAGS += -Map=out.map
+LDFLAGS += -mfpu=fpv4-sp-d16
 #######################################
 # end of user configuration
 #######################################
@@ -72,7 +75,7 @@ LDFLAGS = --entry ResetISR --gc-sections -T$(LD_SCRIPT)
 # binaries
 #######################################
 CC = $(XC_PATH)/arm-none-eabi-gcc
-LD = $(XC_PATH)/arm-none-eabi-ld
+LD = $(XC_PATH)/arm-none-eabi-gcc
 # LD = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
 RM      = rm -f

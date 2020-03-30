@@ -25,13 +25,7 @@ void InitializeTiva()
   // Enable lazy stacking for interrupt handlers.  This allows floating-point
   // instructions to be used within interrupt handlers, but at the expense of
   // extra stack usage.
-  FPULazyStackingEnable();
 
-  // Set the clocking to run directly from the crystal.
-  SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
-
-  ConfigureUART();
-  ConfigureI2C();
 }
 
 void ConfigureUART()

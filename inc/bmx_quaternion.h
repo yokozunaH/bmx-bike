@@ -11,23 +11,37 @@
 
 #include "bno055.h"
 
+typedef struct Quaternion
+{
+  float x;
+  float y;
+  float z;
+  float w;
+} Quaternion;
+
+
+/// \brief Convert Boash quaternion to float
+/// \param *q: pointer to a bosch quaternion struct
+/// \returns a Quaternion with float type members
+Quaternion bnoquat_to_float(struct bno055_quaternion_t *q);
+
 /// \brief Calculate the magnitude of a quaternion.
 /// \param *q: a pointer to a quaternion
 /// \return the magnitude
-float magnitude(struct bno055_quaternion_t *q);
+float magnitude(Quaternion *q);
 
 /// \brief Normalize a quaternion.
 /// \param *q: a pointer to a quaternion
-void normalize(struct bno055_quaternion_t *q);
+void normalize(Quaternion *q);
 
 /// \brief Scale down a quaternion through division.
 /// \param *q: a pointer to a quaternion
 /// \param val: the number to divde by
-void scale_divide(struct bno055_quaternion_t *q, float val);
+void scale_divide(Quaternion *q, float val);
 
 /// \brief Calculate the corresponding euler angles of a quaternion.
 /// \param *q: a pointer to a quaternion
 /// \return ea: a struct containing euler angles
-struct bno055_euler_float_t toEuler(struct bno055_quaternion_t *q);
+struct bno055_euler_float_t toEuler(Quaternion *q);
 
 #endif
