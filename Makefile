@@ -11,7 +11,7 @@
 # Path to the ARM cross-compiler:
 # Linux users: the path will be $(HOME)/Embedded/gcc-arm-none-eabi-5_4-2016q3/bin
 # Windows users: the path will be "C:/Program Files (x86)/GNU Tools ARM Embedded/5.4 2016q3/bin"
-XC_PATH = $(HOME)/Embedded/gcc-arm-none-eabi-5_4-2016q3/bin
+XC_PATH = $(HOME)/Embedded/gcc-arm-none-eabi/bin
 
 # Serial port:
 # Linux users: the port will be something like /dev/ttyACM0
@@ -50,7 +50,7 @@ OUTDIR = build
 
 
 LDLIBS = -L$(DRIVERLIB_PATH) -ldriver
-LDLIBS += -L$(HOME)/Embedded/gcc-arm-none-eabi-5_4-2016q3/arm-none-eabi/lib/fpu -lm -lc
+LDLIBS += -L$(HOME)/Embedded/gcc-arm-none-eabi/arm-none-eabi/lib/fpu -lm -lc
 
 # LD_SCRIPT: linker script
 LD_SCRIPT = $(MCU).ld

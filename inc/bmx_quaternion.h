@@ -13,6 +13,7 @@
 
 typedef struct Quaternion
 {
+<<<<<<< HEAD
   float x;
   float y;
   float z;
@@ -23,6 +24,14 @@ typedef struct Quaternion
 /// \brief Convert Boash quaternion to float
 /// \param *q: pointer to a bosch quaternion struct
 /// \returns a Quaternion with float type members
+=======
+    float x;
+    float y;
+    float z;
+    float w;
+} Quaternion;
+
+>>>>>>> d103044ae50572f237fa5d296d1e6195724ddd95
 Quaternion bnoquat_to_float(struct bno055_quaternion_t *q);
 
 /// \brief Calculate the magnitude of a quaternion.

@@ -9,6 +9,7 @@
 
 Quaternion bnoquat_to_float(struct bno055_quaternion_t *q)
 {
+<<<<<<< HEAD
   Quaternion qf;
   // UARTprintf("%d  %d  %d  %d  \n", q->x, q->y, q->z, q->w);
   qf.x = (float) q->x;
@@ -16,6 +17,15 @@ Quaternion bnoquat_to_float(struct bno055_quaternion_t *q)
   qf.z = (float) q->z;
   qf.w = (float) q->w;
   return qf;
+=======
+    Quaternion qf;
+
+    qf.x = (float) q->x;
+    qf.y = (float) q->y;
+    qf.z = (float) q->z;
+    qf.w = (float) q->w;
+    return qf;
+>>>>>>> d103044ae50572f237fa5d296d1e6195724ddd95
 }
 
 float magnitude(Quaternion *q)
