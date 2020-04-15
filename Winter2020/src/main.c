@@ -78,56 +78,7 @@ int main(void)
 
   struct bno055_quaternion_t q;
   struct bno055_euler_float_t ea;
-<<<<<<< HEAD
-  int xang[2], yang[2], zang[2], wang[2];
-
-  Quaternion q_f;
-
-  char str[100];
-
-  while(1)
-  {
-    comres = bno055_get_gyro_calib_stat(&gyro_cal);
-    comres = bno055_get_mag_calib_stat(&mag_cal);
-    comres = bno055_get_accel_calib_stat(&acc_cal);
-    comres = bno055_get_sys_calib_stat(&sys_cal);
-
-    comres = bno055_read_quaternion_wxyz(&q);
-    // UARTprintf("%d \n", comres);
-    // UARTprintf("test \n\r");
-
-
-    UARTprintf("%d  %d  %d  %d  \n", q.x, q.y, q.z, q.w);
-
-    q_f = bnoquat_to_float(&q);
-    // sprintf(str, "%f", q_f.x);
-    UARTprintf("%f  %f  %f  %f  \n", q_f.x, q_f.y, q_f.z, q_f.w);
-    // UARTprintf("%s", str);
-
-    scale_divide(&q_f, QUATERNION_SCALING);
-    // normalize(&q_f);
-
-    float_to_2ints(q_f.x, xang, 3);
-    float_to_2ints(q_f.y, yang, 3);
-    // float_to_2ints(q_f.z, zang, 3);
-    // float_to_2ints(q_f.w, wang, 3);
-
-    // UARTprintf("%d.%d ", xang[0], xang[1]);
-    // UARTprintf(" %d.%d ", yang[0], yang[1]);
-    // UARTprintf(" %d.%d ", zang[0], zang[1]);
-    // UARTprintf(" %d.%d \n", wang[0], wang[1]);
-
-    // ea = toEuler(&q_f);
-    //
-    // float_to_2ints(ea.r, xang, 3);
-    // float_to_2ints(ea.p, yang, 3);
-    // float_to_2ints(ea.h, zang, 3);
-    //
-    // UARTprintf("%d.%d ", xang[0], xang[1]);
-    // UARTprintf(" %d.%d ", yang[0], yang[1]);
-    // UARTprintf(" %d.%d \n", zang[0], zang[1]);
-
-=======
+  
   volatile int xang[2], yang[2], zang[2], wang[2];
 
   //Initialize strings for bluetooth printing
@@ -251,8 +202,6 @@ int main(void)
 
 
     //UARTprintf("%d.%d  %d.%d  %d.%d  %d  %d  %d  %d  \n", xang[0], xang[1], yang[0], yang[1], zang[0], zang[1], gyro_cal, mag_cal, acc_cal, sys_cal);*/
-
->>>>>>> d103044ae50572f237fa5d296d1e6195724ddd95
   }
 
   return 0;

@@ -27,8 +27,6 @@ void InitializeTiva()
   // instructions to be used within interrupt handlers, but at the expense of
   // extra stack usage.
 
-<<<<<<< HEAD
-=======
   // Set the clocking to run directly from the crystal.
   SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_XTAL_16MHZ | SYSCTL_OSC_MAIN);
 
@@ -47,7 +45,6 @@ void InitializeTiva()
   ConfigureBluetoothUART();
   ConfigureQEI();
   ConfigureQEIVel();
->>>>>>> d103044ae50572f237fa5d296d1e6195724ddd95
 }
 
 void ConfigureUART()
