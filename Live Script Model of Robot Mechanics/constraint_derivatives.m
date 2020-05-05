@@ -18,11 +18,16 @@
 
 function [A_all,Hessian] = constraint_derivatives(x,params)
 
+theta_com = x(3);
 
 r_bw = params.model.geom.wheel.r;
+bw_com_distance = params.model.geom.bw_com.l;
+bw_com_init_angle = params.model.geom.bw_com.theta;
+fw_com_distance = params.model.geom.fw_com.l;
+fw_com_init_angle = params.model.geom.fw_com.theta;
 
 
-[A_all,H_cbw_x,H_cbw_y,H_cfw_y] = autogen_constraint_derivatives(r_bw);
+[A_all,H_cbw_x,H_cbw_y,H_cfw_y] = autogen_constraint_derivatives(bw_com_distance,bw_com_init_angle,fw_com_distance,fw_com_init_angle,r_bw,theta_com);
 Hessian = cat(3,H_cbw_x,H_cbw_y,H_cfw_y);
 
 end

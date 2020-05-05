@@ -13,10 +13,13 @@
 
 function H = H_eom(x,params)
 
-theta_fw = x(5);
+theta_com = x(3);
 theta_bw = x(4);
+theta_fw = x(5);
+
 dx_com = x(6);
 dy_com = x(7);
+dtheta_com = x(8);
 dtheta_bw = x(9);
 dtheta_fw = x(10);
 
@@ -24,11 +27,15 @@ g = params.model.dyn.g;
 m_bw = params.model.dyn.bw.m;
 m_com = params.model.dyn.com.m;
 m_fw = params.model.dyn.fw.m;
+bw_com_distance = params.model.geom.bw_com.l;
+bw_com_init_angle = params.model.geom.bw_com.theta;
+fw_com_distance = params.model.geom.fw_com.l;
+fw_com_init_angle = params.model.geom.fw_com.theta;
 
 
-%function H = autogen_H_eom(dtheta_bw,dtheta_fw,dx_com,dy_com,g,m_bw,m_com,m_fw,theta_bw,theta_fw)
+%function H = autogen_H_eom(bw_com_distance,bw_com_init_angle,dtheta_bw,dtheta_fw,dtheta_com,dx_com,dy_com,fw_com_distance,fw_com_init_angle,g,m_bw,m_com,m_fw,theta_bw,theta_fw,theta_com)
 
-H = autogen_H_eom(dtheta_bw,dtheta_fw,dx_com,dy_com,g,m_bw,m_com,m_fw,theta_bw,theta_fw);
+H = autogen_H_eom(bw_com_distance,bw_com_init_angle,dtheta_bw,dtheta_fw,dtheta_com,dx_com,dy_com,fw_com_distance,fw_com_init_angle,g,m_bw,m_com,m_fw,theta_bw,theta_fw,theta_com);
 
 end
 

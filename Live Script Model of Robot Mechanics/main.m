@@ -45,8 +45,8 @@ plot_robot(x_IC(1:5),params,'new_fig',false);
  xsim_passive = xsim_passive'; % required by animate_robot.m
 % 
  figure;
- subplot(2,1,1), plot(tsim_passive,xsim_passive(2,:),'b-') %,...
-                      %tsim_passive,xsim_passive(2,:),'r-','LineWidth',2);
+ subplot(2,1,1), plot(tsim_passive,xsim_passive(2,:),'b-',...
+                      tsim_passive,xsim_passive(3,:),'r-','LineWidth',2);
  %subplot(2,1,2), plot(tsim_passive,xsim_passive(4,:),'b:',...
  %                     tsim_passive,xsim_passive(5,:),'r:','LineWidth',2);
 % 
