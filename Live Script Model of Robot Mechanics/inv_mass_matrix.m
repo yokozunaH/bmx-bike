@@ -27,7 +27,7 @@ bw_com_init_angle = params.model.geom.bw_com.theta;
 fw_com_distance = params.model.geom.fw_com.l;
 fw_com_init_angle = params.model.geom.fw_com.theta;
 
-Minv = autogen_inverse_mass_matrix(I_bw,I_com,I_fw,bw_com_distance,bw_com_init_angle,fw_com_distance,fw_com_init_angle,m_bw,m_com,m_fw,theta_bw,theta_fw,theta_com);
+Minv = autogen_inverse_mass_matrix(I_bw,I_com,I_fw,bw_com_distance,bw_com_init_angle,fw_com_distance,fw_com_init_angle,m_bw,m_com,m_fw,theta_com);
 
 end
 

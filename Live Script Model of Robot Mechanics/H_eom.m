@@ -34,8 +34,7 @@ fw_com_init_angle = params.model.geom.fw_com.theta;
 
 
 %function H = autogen_H_eom(bw_com_distance,bw_com_init_angle,dtheta_bw,dtheta_fw,dtheta_com,dx_com,dy_com,fw_com_distance,fw_com_init_angle,g,m_bw,m_com,m_fw,theta_bw,theta_fw,theta_com)
-
-H = autogen_H_eom(bw_com_distance,bw_com_init_angle,dtheta_bw,dtheta_fw,dtheta_com,dx_com,dy_com,fw_com_distance,fw_com_init_angle,g,m_bw,m_com,m_fw,theta_bw,theta_fw,theta_com);
+H = autogen_H_eom(bw_com_distance,bw_com_init_angle,dtheta_com,fw_com_distance,fw_com_init_angle,g,m_bw,m_com,m_fw,theta_com);
 
 end
 

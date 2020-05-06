@@ -36,7 +36,7 @@ x_IC = [params.sim.ICs.x_com;
 plot_robot(x_IC(1:5),params,'new_fig',false);
 
 % %% Simulate the robot forward in time with no control input
- tspan_passive = 0:params.sim.dt:5;
+ tspan_passive = 0:params.sim.dt:10;
  [tsim_passive, xsim_passive] = ode45(@(t,x) robot_dynamics_constraints(...
      t,x,params), ...%,'controller','passive'),...
      tspan_passive, x_IC');
@@ -45,12 +45,16 @@ plot_robot(x_IC(1:5),params,'new_fig',false);
  xsim_passive = xsim_passive'; % required by animate_robot.m
 % 
  figure;
+ 
+ % calculate the x position of the wheel:
+ test = xsim_passive(2,:) - params.model.geom.bw_com.l * sin(params.model.geom.bw_com.theta + xsim_passive(3,:));
+ 
  subplot(2,1,1), plot(tsim_passive,xsim_passive(2,:),'b-',...
                       tsim_passive,xsim_passive(3,:),'r-','LineWidth',2);
- %subplot(2,1,2), plot(tsim_passive,xsim_passive(4,:),'b:',...
- %                     tsim_passive,xsim_passive(5,:),'r:','LineWidth',2);
-% 
-% 
+ subplot(2,1,2), plot(tsim_passive,xsim_passive(4,:),'b:',...
+                      tsim_passive,test,'r:','LineWidth',2);
+
+                  
  pause(1); % helps prevent animation from showing up on the wrong figure
  animate_robot(xsim_passive(1:5,:),params,'trace_cart_com',false,...
      'trace_pend_com',false,'trace_pend_tip',false,'video',true);

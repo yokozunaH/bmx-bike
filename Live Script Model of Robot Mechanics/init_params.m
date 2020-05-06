@@ -19,7 +19,7 @@ function params = init_params
      
      params.model.dyn.bw.I = 0.001;% moment of inertia of bw
      params.model.dyn.fw.I = 0.001; % moment of inertia of fw
-     params.model.dyn.com.I = 0.005; % moment of inertia of com
+     params.model.dyn.com.I = 0.05; % moment of inertia of com
      
      params.model.dyn.g = 9.81;      % acceleration due to gravity
      params.model.dyn.tau_bw = 0;      % acceleration due to gravity
