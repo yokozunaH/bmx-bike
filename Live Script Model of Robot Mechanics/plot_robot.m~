@@ -123,33 +123,28 @@ T_com_bw = T_rot_com*T_tran_fw*T_rot_fw;
 
 wheel.center = [0;0;1];
 wheel.radius = [params.model.geom.wheel.r; 0; 1];                           
-
+                     
 
 % Now compute the 4 corners of the legs after undergoing planar
 % translation + rotation
 wheel_fw.curr.center = T_body*T_com_fw*wheel.center;
 wheel_bw.curr.center = T_body*T_com_bw*wheel.center;
-wheel_fw.curr.radius = T_body*T_com_fw*wheel.radius;  
-wheel_bw.curr.radius = T_body*T_com_bw*wheel.radius;
+
 %% Compute the bike legs
 
 
 %Compute leg location based on the location of the wheel centers
 leg.bw.low_right.x   =  0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
-%leg.bw.low_right.y   =  wheel_bw.curr.center(2);
-leg.bw.low_right.y   =  -0.5*params.model.geom.leg.l + wheel_bw.curr.center(2);
+leg.bw.low_right.y   =  wheel_bw.curr.center(2);
 
 leg.bw.low_left.x    = -0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
-%leg.bw.low_left.y    = wheel_bw.curr.center(2);
-leg.bw.low_left.y   =  -0.5*params.model.geom.leg.l + wheel_bw.curr.center(2);
+leg.bw.low_left.y    = wheel_bw.curr.center(2);
 
 leg.bw.upp_right.x   = 0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
-%leg.bw.upp_right.y   = wheel_bw.curr.center(2) + params.model.geom.leg.l;
-leg.bw.upp_right.y   = 0.5*params.model.geom.leg.l + wheel_bw.curr.center(2);
+leg.bw.upp_right.y   = wheel_bw.curr.center(2) + params.model.geom.leg.l;
 
 leg.bw.upp_left.x    = -0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
-leg.bw.upp_left.y   = 0.5*params.model.geom.leg.l + wheel_bw.curr.center(2);
-
+leg.bw.upp_left.y    = wheel_bw.curr.center(2) + params.model.geom.leg.l;
 
 
 leg_bw.corners = horzcat([leg.bw.upp_left.x; leg.bw.upp_left.y;   1],...
@@ -222,7 +217,7 @@ fill(x_circle, y_circle, c)
 end
 
 function segments = segment(x1,y1,x2,y2,c)
-x = [x1 x2];
+x = [x1 y2];
 y = [y1 y2];
 segments = line(x,y,'Color',c);
 end
