@@ -43,21 +43,25 @@ parse(p, q, params, varargin{:});
 % disp(p.Results)
 
 
-%% Compute the 4 corners of the bike's body, clockwise from top left corner
+%% Compute the corners of the bike's body, clockwise from top left corner
 % First compute the cart's home position (q(1) = 0):
 body.home.upp_left.x    = -0.5*params.model.geom.body.w;
 body.home.upp_left.y    = 0.5*params.model.geom.body.h;
 
-body.home.upp_right.x   = 0.5*params.model.geom.body.w;
-body.home.upp_right.y   = 0.5*params.model.geom.body.h;
+body.home.upp_right.x   = 0.6*params.model.geom.body.w;
+body.home.upp_right.y   = 0.2*params.model.geom.body.h;
 
-body.home.low_right.x   = 0.5*params.model.geom.body.w;
-body.home.low_right.y   = -0.5*params.model.geom.body.h;
+body.home.upp_mid.x   = 0;
+body.home.upp_mid.y   = 0.2*params.model.geom.body.h;
+
+body.home.low_right.x   = 1*params.model.geom.body.w;
+body.home.low_right.y   = -0.3*params.model.geom.body.h;
 
 body.home.low_left.x    = -0.5*params.model.geom.body.w;
-body.home.low_left.y    = -0.5*params.model.geom.body.h;
+body.home.low_left.y    = -0.3*params.model.geom.body.h;
 
 body.home.corners = horzcat([body.home.upp_left.x; body.home.upp_left.y; 1],...
+                            [body.home.upp_mid.x; body.home.upp_mid.y; 1],...
                             [body.home.upp_right.x; body.home.upp_right.y; 1],...
                             [body.home.low_right.x; body.home.low_right.y; 1],...
                             [body.home.low_left.x;  body.home.low_left.y; 1]);
@@ -70,55 +74,18 @@ T_body = [cos(q(3)), -sin(q(3)), q(1);
           0,          0,         1];
 body.curr.corners = T_body*body.home.corners;
 
-%% Compute the 4 corners of the legs
-% The pendulum is a rectangle whose center is q(1) = x_cart. The pendulum
-% can translate horizontally and can rotate, so we first compute a 
-% homogeneous transformation matrix T_pend in SE(2):
-
-T_body_leftleg = [cos(0), -sin(0), -params.model.geom.body.w/2;
-                 sin(0),  cos(0), -params.model.geom.body.h/2;
-                   0,          0,         1];
-               
-T_body_rightleg = [cos(0), -sin(0), params.model.geom.body.w/2;
-                 sin(0),  cos(0), -params.model.geom.body.h/2;
-                   0,          0,         1];
-
-
-
-% We first compute the 4 corners of the pendulum when the robot is in the
-% "home" configuration (q(1) = q(2) = 0):
-leg.home.upp_left.x    = -0.5*params.model.geom.leg.w;
-leg.home.upp_left.y    = 0.5*params.model.geom.leg.l;
-
-leg.home.upp_right.x   = 0.5*params.model.geom.leg.w;
-leg.home.upp_right.y   = 0.5*params.model.geom.leg.l;
-
-leg.home.low_right.x   =  0.5*params.model.geom.leg.w;
-leg.home.low_right.y   = -0.5*params.model.geom.leg.l;
-
-leg.home.low_left.x    = -0.5*params.model.geom.leg.w;
-leg.home.low_left.y    = -0.5*params.model.geom.leg.l;
-
-leg.home.corners = horzcat([leg.home.upp_left.x; leg.home.upp_left.y;   1],...
-                            [leg.home.upp_right.x; leg.home.upp_right.y; 1],...
-                            [leg.home.low_right.x; leg.home.low_right.y; 1],...
-                            [leg.home.low_left.x;  leg.home.low_left.y;  1]);
-            
-
-% Now compute the 4 corners of the legs after undergoing planar
-% translation + rotation
-leg_l.curr.corners = T_body*T_body_leftleg*leg.home.corners;
-leg_r.curr.corners = T_body*T_body_rightleg*leg.home.corners;
-
-
 
 %% Compute the location of the wheels
 % The pendulum is a rectangle whose center is q(1) = x_cart. The pendulum
 % can translate horizontally and can rotate, so we first compute a 
 % homogeneous transformation matrix T_pend in SE(2):
 
-T_leg_wheel = [cos(0), -sin(0),         0;
-               sin(0),  cos(0), -params.model.geom.leg.l/2;
+T_com_bw = [cos(0), -sin(0), -params.model.geom.bw_com.l*cos(params.model.geom.bw_com.theta);
+               sin(0),  cos(0), -params.model.geom.bw_com.l*sin(params.model.geom.bw_com.theta);
+                0,          0,         1];
+            
+T_com_fw = [cos(0), -sin(0), -params.model.geom.fw_com.l*cos(params.model.geom.fw_com.theta);
+               sin(0),  cos(0), -params.model.geom.fw_com.l*sin(params.model.geom.fw_com.theta);
                 0,          0,         1];
                
 
@@ -128,24 +95,49 @@ wheel.center = [0;0;1];
 
 % Now compute the 4 corners of the legs after undergoing planar
 % translation + rotation
-wheel_l.curr.center = T_body*T_body_leftleg*T_leg_wheel*wheel.center;
-wheel_r.curr.center = T_body*T_body_rightleg*T_leg_wheel*wheel.center;
+wheel_fw.curr.center = T_body*T_com_fw*wheel.center;
+wheel_bw.curr.center = T_body*T_com_bw*wheel.center;
 
-%% Evaluate forward kinematics at points of interest
-% FK = fwd_kin(q,params);
-% 
-% % (x,y) location of cart CoM:
-% cart.curr.com.x = FK(1,1);
-% cart.curr.com.y = FK(2,1);
-% 
-% % (x,y) location of pendulum CoM:
-% pend.curr.com.x = FK(1,2);
-% pend.curr.com.y = FK(2,2);
-% 
-% % (x,y) location of pendulum tip:
-% pend.curr.tip.x = FK(1,3);
-% pend.curr.tip.y = FK(2,3);
+%% Compute the bike legs
 
+
+%Compute leg location based on the location of the wheel centers
+leg.bw.low_right.x   =  0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
+leg.bw.low_right.y   =  wheel_bw.curr.center(2);
+
+leg.bw.low_left.x    = -0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
+leg.bw.low_left.y    = wheel_bw.curr.center(2);
+
+leg.bw.upp_right.x   = 0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
+leg.bw.upp_right.y   = wheel_bw.curr.center(2) + params.model.geom.leg.l;
+
+leg.bw.upp_left.x    = -0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
+leg.bw.upp_left.y    = wheel_bw.curr.center(2) + params.model.geom.leg.l;
+
+
+leg_bw.corners = horzcat([leg.bw.upp_left.x; leg.bw.upp_left.y;   1],...
+                            [leg.bw.upp_right.x; leg.bw.upp_right.y; 1],...
+                            [leg.bw.low_right.x; leg.bw.low_right.y; 1],...
+                            [leg.bw.low_left.x;  leg.bw.low_left.y;  1]);
+                        
+leg.fw.low_right.x   =  0.5*params.model.geom.leg.w + wheel_fw.curr.center(1);
+leg.fw.low_right.y   =  wheel_fw.curr.center(2);
+
+leg.fw.low_left.x    = -0.5*params.model.geom.leg.w + wheel_fw.curr.center(1);
+leg.fw.low_left.y    = wheel_fw.curr.center(2);
+
+leg.fw.upp_right.x   = 0.5*params.model.geom.leg.w + wheel_fw.curr.center(1);
+leg.fw.upp_right.y   = wheel_fw.curr.center(2) + params.model.geom.leg.l;
+
+leg.fw.upp_left.x    = -0.5*params.model.geom.leg.w + wheel_fw.curr.center(1);
+leg.fw.upp_left.y    = wheel_fw.curr.center(2) + params.model.geom.leg.l;
+
+
+leg_fw.corners = horzcat([leg.fw.upp_left.x; leg.fw.upp_left.y;   1],...
+                            [leg.fw.upp_right.x; leg.fw.upp_right.y; 1],...
+                            [leg.fw.low_right.x; leg.fw.low_right.y; 1],...
+                            [leg.fw.low_left.x;  leg.fw.low_left.y;  1]);
+            
 %% Display the cart, pendulum, and the pendulum's CoM
 if p.Results.new_fig
     figure;
@@ -153,14 +145,24 @@ end
 
 fill(body.curr.corners(1,:),body.curr.corners(2,:),params.viz.colors.body);
 hold on;
-fill(leg_l.curr.corners(1,:),leg_l.curr.corners(2,:),params.viz.colors.leg);
-fill(leg_r.curr.corners(1,:),leg_r.curr.corners(2,:),params.viz.colors.leg);
-plot(wheel_l.curr.center(1), wheel_l.curr.center(2),'o','MarkerSize',20,...
-    'MarkerFaceColor',params.viz.colors.wheels,...
-    'MarkerEdgeColor',params.viz.colors.wheels);
-plot(wheel_r.curr.center(1), wheel_r.curr.center(2),'o','MarkerSize',20,...
-    'MarkerFaceColor',params.viz.colors.wheels,...
-    'MarkerEdgeColor',params.viz.colors.wheels);
+fill(leg_bw.corners(1,:),leg_bw.corners(2,:),params.viz.colors.leg);
+fill(leg_fw.corners(1,:),leg_fw.corners(2,:),params.viz.colors.leg);
+
+%Create wheels
+circle(wheel_bw.curr.center(1),wheel_bw.curr.center(2),params.model.geom.wheel.r,params.viz.colors.tracers.wheels);
+circle(wheel_fw.curr.center(1),wheel_fw.curr.center(2),params.model.geom.wheel.r,params.viz.colors.tracers.wheels);
+
+%Create back curve
+%circle(body.curr.corners(1,1),q(2)+0.03, 0.35*params.model.geom.body.h,params.viz.colors.body);
+
+%Add Marker for CoM
+ plot(q(1), q(2),'o','MarkerSize',10,...
+     'MarkerFaceColor',params.viz.colors.wheels,...
+     'MarkerEdgeColor',params.viz.colors.wheels);
+ 
+%Add ground line
+yline(0);
+
 hold off;
 
 axis(params.viz.axis_lims);
@@ -169,4 +171,13 @@ daspect([1 1 1]) % no distortion
 xlabel('$x$');
 ylabel('$y$');
 
+end
+
+
+function circles = circle(x,y,r,c)
+th = 0:pi/50:2*pi;
+x_circle = r * cos(th) + x;
+y_circle = r * sin(th) + y;
+circles = plot(x_circle, y_circle);
+fill(x_circle, y_circle, c)
 end
