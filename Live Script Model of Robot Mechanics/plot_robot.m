@@ -72,6 +72,9 @@ body.home.corners = horzcat([body.home.upp_left.x; body.home.upp_left.y; 1],...
 T_body = [cos(q(3)), -sin(q(3)), q(1);
           sin(q(3)),  cos(q(3)), q(2);
           0,          0,         1];
+T_body_trans = [cos(0), -sin(0), q(1);
+          sin(0),  cos(0), q(2);
+          0,          0,         1];
 body.curr.corners = T_body*body.home.corners;
 
 
@@ -100,6 +103,9 @@ y_fw = params.model.geom.fw_com.l*sin(params.model.geom.fw_com.theta + q(3));
 T_rot_com = [cos(-q(3)), -sin(-q(3)), 0;
             sin(-q(3)), cos(-q(3)), 0;
             0, 0, 1];
+T_rot_com_legs = [cos(q(3)), -sin(q(3)), 0;
+            sin(q(3)), cos(q(3)), 0;
+            0, 0, 1];
 
 T_rot_bw = [cos(q(4)), -sin(q(4)), 0;
             sin(q(4)), cos(q(4)), 0;
@@ -117,6 +123,11 @@ T_tran_fw = [1, 0, -x_fw;
             0, 1, -y_fw;
             0, 0, 1];
 
+T_tran_wheel_leg = [1, 0, 0;
+                    0, 1, params.model.geom.leg.wheel_d;
+                     0, 0, 1];
+       
+
 T_com_fw = T_rot_com*T_tran_bw*T_rot_bw;
 T_com_bw = T_rot_com*T_tran_fw*T_rot_fw;
                
@@ -133,47 +144,28 @@ wheel_fw.curr.radius = T_body*T_com_fw*wheel.radius;
 wheel_bw.curr.radius = T_body*T_com_bw*wheel.radius;
 %% Compute the bike legs
 
+%compute corners of leg at home
+leg.home.low_right.x   =  0.5*params.model.geom.leg.w;
+leg.home.low_right.y   =  -0.5*params.model.geom.leg.l;
 
-%Compute leg location based on the location of the wheel centers
-leg.bw.low_right.x   =  0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
-%leg.bw.low_right.y   =  wheel_bw.curr.center(2);
-leg.bw.low_right.y   =  -0.5*params.model.geom.leg.l + wheel_bw.curr.center(2);
+leg.home.low_left.x   =  -0.5*params.model.geom.leg.w;
+leg.home.low_left.y   =  -0.5*params.model.geom.leg.l;
 
-leg.bw.low_left.x    = -0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
-%leg.bw.low_left.y    = wheel_bw.curr.center(2);
-leg.bw.low_left.y   =  -0.5*params.model.geom.leg.l + wheel_bw.curr.center(2);
+leg.home.upp_right.x   =  0.5*params.model.geom.leg.w;
+leg.home.upp_right.y   =  0.5*params.model.geom.leg.l;
 
-leg.bw.upp_right.x   = 0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
-%leg.bw.upp_right.y   = wheel_bw.curr.center(2) + params.model.geom.leg.l;
-leg.bw.upp_right.y   = 0.5*params.model.geom.leg.l + wheel_bw.curr.center(2);
-
-leg.bw.upp_left.x    = -0.5*params.model.geom.leg.w + wheel_bw.curr.center(1);
-leg.bw.upp_left.y   = 0.5*params.model.geom.leg.l + wheel_bw.curr.center(2);
+leg.home.upp_left.x   =  -0.5*params.model.geom.leg.w;
+leg.home.upp_left.y   =  0.5*params.model.geom.leg.l;
 
 
-
-leg_bw.corners = horzcat([leg.bw.upp_left.x; leg.bw.upp_left.y;   1],...
-                            [leg.bw.upp_right.x; leg.bw.upp_right.y; 1],...
-                            [leg.bw.low_right.x; leg.bw.low_right.y; 1],...
-                            [leg.bw.low_left.x;  leg.bw.low_left.y;  1]);
+leg.home.corners = horzcat([leg.home.upp_left.x; leg.home.upp_left.y;   1],...
+                            [leg.home.upp_right.x; leg.home.upp_right.y; 1],...
+                            [leg.home.low_right.x; leg.home.low_right.y; 1],...
+                            [leg.home.low_left.x;  leg.home.low_left.y;  1]);
+                                              
+leg_bw.corners = T_body_trans*T_tran_bw*T_rot_com_legs*T_tran_wheel_leg*leg.home.corners;                       
                         
-leg.fw.low_right.x   =  0.5*params.model.geom.leg.w + wheel_fw.curr.center(1);
-leg.fw.low_right.y   =  wheel_fw.curr.center(2);
-
-leg.fw.low_left.x    = -0.5*params.model.geom.leg.w + wheel_fw.curr.center(1);
-leg.fw.low_left.y    = wheel_fw.curr.center(2);
-
-leg.fw.upp_right.x   = 0.5*params.model.geom.leg.w + wheel_fw.curr.center(1);
-leg.fw.upp_right.y   = wheel_fw.curr.center(2) + params.model.geom.leg.l;
-
-leg.fw.upp_left.x    = -0.5*params.model.geom.leg.w + wheel_fw.curr.center(1);
-leg.fw.upp_left.y    = wheel_fw.curr.center(2) + params.model.geom.leg.l;
-
-
-leg_fw.corners = horzcat([leg.fw.upp_left.x; leg.fw.upp_left.y;   1],...
-                            [leg.fw.upp_right.x; leg.fw.upp_right.y; 1],...
-                            [leg.fw.low_right.x; leg.fw.low_right.y; 1],...
-                            [leg.fw.low_left.x;  leg.fw.low_left.y;  1]);
+leg_fw.corners = T_body_trans*T_tran_fw*T_rot_com_legs*T_tran_wheel_leg*leg.home.corners;
             
 %% Display the cart, pendulum, and the pendulum's CoM
 if p.Results.new_fig

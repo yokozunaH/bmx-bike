@@ -37,7 +37,8 @@ Minv = inv_mass_matrix(x,params);
 A = A_all([1,2],:);
 Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot; %backwheel x-constraint
             q_dot'*Hessian(:,:,2)*q_dot]; %backwheel y-constraint
-            %q_dot'*Hessian(:,:,3)*q_dot]; %frontwheel y-constraint
+            %q_dot'*Hessian(:,:,3)*q_dot; %frontwheel y-constraint
+            %q_dot'*Hessian(:,:,4)*q_dot]; %frontwheel and backwheel constraint
 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
