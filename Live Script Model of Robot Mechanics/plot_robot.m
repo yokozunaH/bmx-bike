@@ -69,113 +69,120 @@ body.home.corners = horzcat([body.home.upp_left.x; body.home.upp_left.y; 1],...
 % Compute the 4 corners of the body after undergoing planar
 % translation + rotation as described by T_body:
 
-T_body = [cos(q(3)), -sin(q(3)), q(1);
-          sin(q(3)),  cos(q(3)), q(2);
-          0,          0,         1];
-T_body_trans = [cos(0), -sin(0), q(1);
-          sin(0),  cos(0), q(2);
-          0,          0,         1];
+bw_com_init_angle = params.model.geom.bw_com.theta;
+bw_com_distance = params.model.geom.bw_com.l;
+bw_fw_distance = params.model.geom.bw_fw.l;
+
+x_bf = q(1);
+y_bf = q(2);
+theta_com = q(3);
+theta_bw = q(4);
+theta_fw = q(5);
+
+g_wbf = [[cos(0), -sin(0), x_bf]; 
+          [sin(0), cos(0), y_bf];
+          [0, 0, 1]];
+
+g_rot = [[cos(bw_com_init_angle + theta_com), -sin(bw_com_init_angle + theta_com), 0]; 
+         [sin(bw_com_init_angle + theta_com), cos(bw_com_init_angle + theta_com), 0];
+         [0, 0, 1]];
+
+g_trans = [[1, 0, bw_com_distance]; 
+           [0, 1, 0];
+           [0, 0, 1]];
+
+g_bf_com = g_rot * g_trans;
+
+% Need to rotate back the fixed angle amount to align the orientation with
+% the world frame
+g_rot_rev = [[cos(-bw_com_init_angle), -sin(-bw_com_init_angle), 0]; 
+         [sin(-bw_com_init_angle), cos(-bw_com_init_angle), 0];
+         [0, 0, 1]];
+
+T_body = g_wbf*g_bf_com*g_rot_rev;
+
+comX = T_body(1,3);
+comY = T_body(2,3);
+
+% T_body_trans = [cos(0), -sin(0), q(1);
+%                 sin(0),  cos(0), q(2);
+%                      0,       0,   1];
+
 body.curr.corners = T_body*body.home.corners;
 
-
 %% Compute the location of the wheels
-% The pendulum is a rectangle whose center is q(1) = x_cart. The pendulum
-% can translate horizontally and can rotate, so we first compute a 
-% homogeneous transformation matrix T_pend in SE(2):
 
-%prev
-% T_com_bw = [cos(0), -sin(0), -params.model.geom.bw_com.l*cos(params.model.geom.bw_com.theta);
-%                sin(0),  cos(0), -params.model.geom.bw_com.l*sin(params.model.geom.bw_com.theta);
-%                 0,          0,         1];
-%             
-% T_com_fw = [cos(0), -sin(0), -params.model.geom.fw_com.l*cos(params.model.geom.fw_com.theta);
-%                sin(0),  cos(0), -params.model.geom.fw_com.l*sin(params.model.geom.fw_com.theta);
-%                 0,          0,         1];
-%prev
+% Back Wheel Transform
+g_bf_bw = [[cos(theta_bw), -sin(theta_bw), 0]; 
+           [sin(theta_bw), cos(theta_bw), 0];
+           [0, 0, 1]];
+T_w_bw = g_wbf * g_bf_bw;
 
-%edit
-x_bw = params.model.geom.bw_com.l*cos(params.model.geom.bw_com.theta + q(3));
-y_bw = params.model.geom.bw_com.l*sin(params.model.geom.bw_com.theta + q(3));
+% Front Wheel Transform
+g_rot_com = [[cos(theta_com), -sin(theta_com), 0]; 
+         [sin(theta_com), cos(theta_com), 0];
+         [0, 0, 1]];
+     
+g_trans = [[1, 0, bw_fw_distance]; 
+           [0, 1, 0];
+           [0, 0, 1]];
 
-x_fw = params.model.geom.fw_com.l*cos(params.model.geom.fw_com.theta + q(3));
-y_fw = params.model.geom.fw_com.l*sin(params.model.geom.fw_com.theta + q(3));
-
-T_rot_com = [cos(-q(3)), -sin(-q(3)), 0;
-            sin(-q(3)), cos(-q(3)), 0;
-            0, 0, 1];
-T_rot_com_legs = [cos(q(3)), -sin(q(3)), 0;
-            sin(q(3)), cos(q(3)), 0;
-            0, 0, 1];
-
-T_rot_bw = [cos(q(4)), -sin(q(4)), 0;
-            sin(q(4)), cos(q(4)), 0;
-            0, 0, 1];
-
-T_tran_bw = [1, 0, -x_bw;
-            0, 1, -y_bw;
-            0, 0, 1];
-
-T_rot_fw = [cos(q(5)), -sin(q(5)), 0;
-            sin(q(5)), cos(q(5)), 0;
-            0, 0, 1];
-
-T_tran_fw = [1, 0, -x_fw;
-            0, 1, -y_fw;
-            0, 0, 1];
-
-T_tran_wheel_leg = [1, 0, 0;
-                    0, 1, params.model.geom.leg.wheel_d;
-                     0, 0, 1];
+g_rot_com_rev = [[cos(-theta_com), -sin(-theta_com), 0]; 
+                 [sin(-theta_com), cos(-theta_com), 0];
+                 [0, 0, 1]];
        
+g_rot_fw = [[cos(theta_fw), -sin(theta_fw), 0]; 
+            [sin(theta_fw), cos(theta_fw), 0];
+            [0, 0, 1]];
+        
+g_bf_fw = g_rot_com*g_trans*g_rot_com_rev*g_rot_fw;
 
-T_com_fw = T_rot_com*T_tran_bw*T_rot_bw;
-T_com_bw = T_rot_com*T_tran_fw*T_rot_fw;
-               
+T_w_fw = g_wbf * g_bf_fw;
 
 wheel.center = [0;0;1];
 wheel.radius = [params.model.geom.wheel.r; 0; 1];                           
 
-
 % Now compute the 4 corners of the legs after undergoing planar
 % translation + rotation
-wheel_fw.curr.center = T_body*T_com_fw*wheel.center;
-wheel_bw.curr.center = T_body*T_com_bw*wheel.center;
-wheel_fw.curr.radius = T_body*T_com_fw*wheel.radius;  
-wheel_bw.curr.radius = T_body*T_com_bw*wheel.radius;
+wheel_fw.curr.center = T_w_fw*wheel.center;
+wheel_fw.curr.radius = T_w_fw*wheel.radius;
+
+wheel_bw.curr.center = T_w_bw*wheel.center;
+wheel_bw.curr.radius = T_w_bw*wheel.radius;
 %% Compute the bike legs
 
 %compute corners of leg at home
-leg.home.low_right.x   =  0.5*params.model.geom.leg.w;
-leg.home.low_right.y   =  -0.5*params.model.geom.leg.l;
-
-leg.home.low_left.x   =  -0.5*params.model.geom.leg.w;
-leg.home.low_left.y   =  -0.5*params.model.geom.leg.l;
-
-leg.home.upp_right.x   =  0.5*params.model.geom.leg.w;
-leg.home.upp_right.y   =  0.5*params.model.geom.leg.l;
-
-leg.home.upp_left.x   =  -0.5*params.model.geom.leg.w;
-leg.home.upp_left.y   =  0.5*params.model.geom.leg.l;
-
-
-leg.home.corners = horzcat([leg.home.upp_left.x; leg.home.upp_left.y;   1],...
-                            [leg.home.upp_right.x; leg.home.upp_right.y; 1],...
-                            [leg.home.low_right.x; leg.home.low_right.y; 1],...
-                            [leg.home.low_left.x;  leg.home.low_left.y;  1]);
-                                              
-leg_bw.corners = T_body_trans*T_tran_bw*T_rot_com_legs*T_tran_wheel_leg*leg.home.corners;                       
-                        
-leg_fw.corners = T_body_trans*T_tran_fw*T_rot_com_legs*T_tran_wheel_leg*leg.home.corners;
+% leg.home.low_right.x   =  0.5*params.model.geom.leg.w;
+% leg.home.low_right.y   =  -0.5*params.model.geom.leg.l;
+% 
+% leg.home.low_left.x   =  -0.5*params.model.geom.leg.w;
+% leg.home.low_left.y   =  -0.5*params.model.geom.leg.l;
+% 
+% leg.home.upp_right.x   =  0.5*params.model.geom.leg.w;
+% leg.home.upp_right.y   =  0.5*params.model.geom.leg.l;
+% 
+% leg.home.upp_left.x   =  -0.5*params.model.geom.leg.w;
+% leg.home.upp_left.y   =  0.5*params.model.geom.leg.l;
+% 
+% 
+% leg.home.corners = horzcat([leg.home.upp_left.x; leg.home.upp_left.y;   1],...
+%                             [leg.home.upp_right.x; leg.home.upp_right.y; 1],...
+%                             [leg.home.low_right.x; leg.home.low_right.y; 1],...
+%                             [leg.home.low_left.x;  leg.home.low_left.y;  1]);
+%                                               
+% leg_bw.corners = T_body_trans*T_tran_bw*T_rot_com_legs*T_tran_wheel_leg*leg.home.corners;                       
+%                         
+% leg_fw.corners = T_body_trans*T_tran_fw*T_rot_com_legs*T_tran_wheel_leg*leg.home.corners;
             
-%% Display the cart, pendulum, and the pendulum's CoM
+%% Display the Bike
 if p.Results.new_fig
     figure;
 end
 
 fill(body.curr.corners(1,:),body.curr.corners(2,:),params.viz.colors.body);
 hold on;
-fill(leg_bw.corners(1,:),leg_bw.corners(2,:),params.viz.colors.leg);
-fill(leg_fw.corners(1,:),leg_fw.corners(2,:),params.viz.colors.leg);
+% fill(leg_bw.corners(1,:),leg_bw.corners(2,:),params.viz.colors.leg);
+% fill(leg_fw.corners(1,:),leg_fw.corners(2,:),params.viz.colors.leg);
 
 %Create wheels
 circle(wheel_bw.curr.center(1),wheel_bw.curr.center(2),params.model.geom.wheel.r,params.viz.colors.tracers.wheels);
@@ -187,7 +194,7 @@ segment(wheel_fw.curr.center(1), wheel_fw.curr.center(2),wheel_fw.curr.radius(1)
 %circle(body.curr.corners(1,1),q(2)+0.03, 0.35*params.model.geom.body.h,params.viz.colors.body);
 
 %Add Marker for CoM
- plot(q(1), q(2),'o','MarkerSize',10,...
+ plot(comX, comY,'o','MarkerSize',10,...
      'MarkerFaceColor',params.viz.colors.wheels,...
      'MarkerEdgeColor',params.viz.colors.wheels);
  

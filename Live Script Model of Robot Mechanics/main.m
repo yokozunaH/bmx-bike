@@ -50,9 +50,9 @@ x_IC = [params.sim.ICs.x_com;
  test = xsim_passive(2,:) - params.model.geom.bw_com.l * sin(params.model.geom.bw_com.theta + xsim_passive(3,:));
  
  subplot(2,1,1), plot(tsim_passive,xsim_passive(1,:),'b-',...
-                      tsim_passive,xsim_passive(3,:),'r-','LineWidth',2);
- subplot(2,1,2), plot(tsim_passive,xsim_passive(4,:),'b:',...
-                      tsim_passive,test,'r:','LineWidth',2);
+                      tsim_passive,xsim_passive(2,:),'r-','LineWidth',2);
+ subplot(2,1,2), plot(tsim_passive,xsim_passive(3,:),'b:',...
+                      tsim_passive,xsim_passive(4,:),'r:','LineWidth',2);
 
                   
  pause(1); % helps prevent animation from showing up on the wrong figure

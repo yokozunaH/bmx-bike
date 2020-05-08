@@ -21,8 +21,8 @@ function params = init_params
      params.model.dyn.fw.I = 0.000380; % moment of inertia of fw
      params.model.dyn.com.I = 0.1225; % moment of inertia of com
 
-     params.model.dyn.g = 9.81;      % acceleration due to gravity
-     params.model.dyn.tau_bw = -0.25;    % applied torque from the backwheel
+     params.model.dyn.g = 1;      % acceleration due to gravity
+     params.model.dyn.tau_bw = 0;    % applied torque from the backwheel
 
     % parameters that help with visualizing the robot:
     params.model.geom.body.w = 0.3; % width of the bike body
@@ -33,11 +33,13 @@ function params = init_params
 
     params.model.geom.wheel.r = 0.0625; % radius of wheels
 
+    params.model.geom.bw_fw.l = 0.34477; % distance between the two wheels
+    
     params.model.geom.bw_com.l = 0.22757; % straight line distance between back wheel and CoM
     params.model.geom.bw_com.theta = 1.101; %Initial angle between back wheel and CoM
 
-    params.model.geom.fw_com.l = 0.31584;% straight line distance between back wheel and CoM
-    params.model.geom.fw_com.theta = 2.464; %Initial angle between back wheel and CoM
+%     params.model.geom.fw_com.l = 0.31584;% straight line distance between back wheel and CoM
+%     params.model.geom.fw_com.theta = 2.464; %Initial angle between back wheel and CoM
 
     params.viz.colors.body = [0.5 0.5 0.5];
     params.viz.colors.leg = [0.25 0.25 0.25];
@@ -50,8 +52,8 @@ function params = init_params
     % parameters related to simulating (integrating) the dynamics forward
     % in time:
     params.sim.ICs.x_com = 0;      % initial positions
-    params.sim.ICs.theta_com = pi/4;
-    params.sim.ICs.y_com = params.model.geom.bw_com.l*sin(params.model.geom.bw_com.theta + params.sim.ICs.theta_com) +  params.model.geom.wheel.r;
+    params.sim.ICs.y_com = params.model.geom.wheel.r;
+    params.sim.ICs.theta_com = 0;
     params.sim.ICs.theta_fw = 0;
     params.sim.ICs.theta_bw = 0;
     params.sim.ICs.dx_com = 0;     % initial velocities

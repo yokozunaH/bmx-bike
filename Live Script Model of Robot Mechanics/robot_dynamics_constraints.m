@@ -26,7 +26,13 @@ q_dot = x(nq+1:2*nq);
 % solve for control inputs at this instant
 %tau_s = interp1(params.motor.spine.time,params.motor.spine.torque,t);
 %tau_m = interp1(params.motor.body.time,params.motor.body.torque,t);
-Q = [0;0;0;params.model.dyn.tau_bw;0];
+kp = 5;
+setpoint = pi/2 - 1.101;
+
+tau = kp * (setpoint - x(3));
+
+% params.model.dyn.tau_bw
+Q = [0;0;0;-tau;0];
 
 % find the parts that don't depend on constraint forces
 H = H_eom(x,params);
@@ -37,8 +43,8 @@ Minv = inv_mass_matrix(x,params);
 A = A_all([1,2],:);
 Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot; %backwheel x-constraint
             q_dot'*Hessian(:,:,2)*q_dot]; %backwheel y-constraint
-            %q_dot'*Hessian(:,:,3)*q_dot; %frontwheel y-constraint
-            %q_dot'*Hessian(:,:,4)*q_dot]; %frontwheel and backwheel constraint
+%             q_dot'*Hessian(:,:,3)*q_dot; %frontwheel y-constraint
+%             q_dot'*Hessian(:,:,4)*q_dot]; %frontwheel and backwheel constraint
 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);

@@ -14,8 +14,6 @@
 function Minv = inv_mass_matrix(x,params)
 
 theta_com = x(3);
-theta_bw = x(4);
-theta_fw = x(5);
 I_bw = params.model.dyn.bw.I;
 I_com = params.model.dyn.com.I;
 I_fw = params.model.dyn.fw.I;
@@ -24,10 +22,10 @@ m_com = params.model.dyn.com.m;
 m_fw = params.model.dyn.fw.m;
 bw_com_distance = params.model.geom.bw_com.l;
 bw_com_init_angle = params.model.geom.bw_com.theta;
-fw_com_distance = params.model.geom.fw_com.l;
-fw_com_init_angle = params.model.geom.fw_com.theta;
 
-Minv = autogen_inverse_mass_matrix(I_bw,I_com,I_fw,bw_com_distance,bw_com_init_angle,fw_com_distance,fw_com_init_angle,m_bw,m_com,m_fw,theta_com);
+bw_fw_distance = params.model.geom.bw_fw.l;
+
+Minv = autogen_inverse_mass_matrix(I_bw,I_com,I_fw,bw_fw_distance,bw_com_distance,bw_com_init_angle,m_bw,m_com,m_fw,theta_com);
 
 end
 
