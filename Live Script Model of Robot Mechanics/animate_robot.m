@@ -57,7 +57,7 @@ else
 end
     
     if p.Results.video
-        v = VideoWriter('swingup.avi');
+        v = VideoWriter('bikeanim.avi');
         open(v);
     end
     

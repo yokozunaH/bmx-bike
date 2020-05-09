@@ -21,8 +21,8 @@ function params = init_params
      params.model.dyn.fw.I = 0.000380; % moment of inertia of fw
      params.model.dyn.com.I = 0.1225; % moment of inertia of com
 
-     params.model.dyn.g = 1;      % acceleration due to gravity
-     params.model.dyn.tau_bw = 0;    % applied torque from the backwheel
+     params.model.dyn.g = 9.81;      % acceleration due to gravity
+     params.model.dyn.tau_bw = -2;    % applied torque from the backwheel
 
     % parameters that help with visualizing the robot:
     params.model.geom.body.w = 0.3; % width of the bike body
@@ -48,11 +48,12 @@ function params = init_params
     params.viz.colors.tracers.leg = 'g';
     params.viz.colors.tracers.wheels = 'b';
     params.viz.axis_lims = [-0.5,3,-0.1,1];
+    params.viz.dt = 0.05;
 
     % parameters related to simulating (integrating) the dynamics forward
     % in time:
-    params.sim.ICs.x_com = 0;      % initial positions
-    params.sim.ICs.y_com = params.model.geom.wheel.r;
+    params.sim.ICs.x_bf = 0;      % initial positions
+    params.sim.ICs.y_bf = params.model.geom.wheel.r;
     params.sim.ICs.theta_com = 0;
     params.sim.ICs.theta_fw = 0;
     params.sim.ICs.theta_bw = 0;
@@ -61,5 +62,12 @@ function params = init_params
     params.sim.ICs.dtheta_com = 0;
     params.sim.ICs.dtheta_fw = 0;
     params.sim.ICs.dtheta_bw = 0;
+    params.sim.tfinal = 5;          % Length of the simulation
     params.sim.dt = 0.05;           % simulation timestep
+    
+    % variables related to the constraints
+    params.sim.constraints.number = 4;  % total number of constraint equations
+    
+    % list of ground constraints True if wheel is on the ground; False otherwise
+    params.sim.constraints = ['true','true']; % [back wheel, front wheel]
 end

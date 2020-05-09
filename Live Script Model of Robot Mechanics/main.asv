@@ -44,14 +44,21 @@ xsim = [];
 options = odeset('Events',@robot_events);
 
 while params.sim.tfinal - t_curr > params.sim.dt
-        
+    
+    disp(t_curr)
+    
     tspan_passive = t_curr:params.sim.dt:params.sim.tfinal;
     
     [tseg, xseg, ~, ~, ~] = ode45(@robot_dynamics_constraints, tspan_passive, x_IC', options);
+
+    size(tseg)
+    size(xseg)
     
     % extract info from the integration
     tsim = [tsim;tseg]; % build up the time vector after each event
     xsim = [xsim;xseg]; % build up the calculated state after each event
+    
+    size(xsim)
     
     t_curr = tsim(end); % set the current time to where the integration stopped
     x_IC = xsim(end,:); % set the initial condition to where the integration stopped
@@ -61,7 +68,7 @@ while params.sim.tfinal - t_curr > params.sim.dt
         switch params.sim.constraints
             case ['true','true'] % both wheels are on the ground
                 disp("Changed Constraint!")
-                params.sim.constraints = ['true', 'false']; % the front wheel is now off the ground    end
+                params.sim.constrains = ['true','false']; % the front wheel is now off the ground    end
         end
     end
 end
@@ -70,8 +77,12 @@ end
  
  figure;
  
+ size(xsim);
+ 
  xplot = xsim';
-  
+ 
+ size(xplot);
+ 
  % plot the x and y position of the back wheel
  subplot(2,1,1), plot(tsim,xplot(1,:),'b-',...
                       tsim,xplot(2,:),'r-','LineWidth',2);
@@ -124,7 +135,7 @@ dx = zeros(numel(x),1);
 nq = numel(x)/2;    % assume that x = [q;q_dot];
 q_dot = x(nq+1:2*nq);
 
-tau = params.model.dyn.tau_bw * 0.05;
+tau = 0;
 
 if t > 1
     tau = params.model.dyn.tau_bw;
