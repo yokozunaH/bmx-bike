@@ -63,7 +63,7 @@ while params.sim.tfinal - t_curr > params.sim.dt
     x_IC = xsim(end,:); % set the initial condition to where the integration stopped
     
     % if the simulation ended early, specify the new set of constraints
-    if  params.sim.tfinal - tseg(end) > params.sim.dt
+    if  params.sim.tfinal - tseg(end) > params.sim.dt && x_IC(1)>2.7
         switch params.sim.constraints
             case ['flat_ground'] %both wheels are on the ground
                 disp("Changed Constraint!")
@@ -173,7 +173,7 @@ switch params.sim.constraints
         dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
         dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
         F_calc = Fnow;
-        x_fw_ramp = x(1) - params.model.geom.ramp.x + params.model.geom.body.w;
+        x_fw_ramp = x(1) - params.model.geom.ramp.x;
         
     case ['fw_ramp'] % front wheel is on the ramp
         A = A_all([2,6],:);
@@ -183,7 +183,7 @@ switch params.sim.constraints
         Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
         dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
         dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
-        x_bw_ramp = x(1) - params.model.geom.ramp.x;
+        x_bw_ramp = x(1) - params.model.geom.ramp.x-params.model.geom.body.w;
     
     case ['bw_ramp'] % both wheels on the ramp
         A = A_all([5,6],:);

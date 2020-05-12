@@ -173,7 +173,7 @@ switch params.sim.constraints
         dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
         dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
         F_calc = Fnow;
-        x_fw_ramp = x(1) - params.model.geom.ramp.x + params.model.geom.body.w;
+        x_fw_ramp = x(1) - params.model.geom.ramp.x-;
         
     case ['fw_ramp'] % front wheel is on the ramp
         A = A_all([2,6],:);

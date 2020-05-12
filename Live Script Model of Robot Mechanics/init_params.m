@@ -42,8 +42,8 @@ function params = init_params
     params.model.geom.bw_com.l = 0.22757; % straight line distance between back wheel and CoM
     params.model.geom.bw_com.theta = 1.101; %Initial angle between back wheel and CoM
 
-    params.model.geom.fw_com.l = 0.31584;% straight line distance between back wheel and CoM
-    params.model.geom.fw_com.theta = 2.464; %Initial angle between back wheel and CoM
+%     params.model.geom.fw_com.l = 0.31584;% straight line distance between back wheel and CoM
+%     params.model.geom.fw_com.theta = 2.464; %Initial angle between back wheel and CoM
 
     params.viz.colors.body = [0.5 0.5 0.5];
     params.viz.colors.leg = [0.25 0.25 0.25];
@@ -51,7 +51,7 @@ function params = init_params
     params.viz.colors.tracers.body = 'r';
     params.viz.colors.tracers.leg = 'g';
     params.viz.colors.tracers.wheels = 'b';
-    params.viz.axis_lims = [-0.1,8,-0.1,4];
+    params.viz.axis_lims = [-0.5,8,-0.1,4];
     params.viz.dt = 0.05;
 
     % parameters related to simulating (integrating) the dynamics forward
