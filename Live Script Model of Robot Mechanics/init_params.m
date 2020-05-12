@@ -22,7 +22,7 @@ function params = init_params
      params.model.dyn.com.I = 0.1225; % moment of inertia of com
 
      params.model.dyn.g = 9.81;      % acceleration due to gravity
-     params.model.dyn.tau_bw = 0;    % applied torque from the backwheel
+     params.model.dyn.tau_bw = -2.5;    % applied torque from the backwheel
      
     % parameters that help with visualizing the robot:
     params.model.geom.body.w = 0.3; % width of the bike body
@@ -34,16 +34,16 @@ function params = init_params
     params.model.geom.wheel.r = 0.0625; % radius of wheels
 
     params.model.geom.ramp.r = 1; %radius of the ramp
-    params.model.geom.ramp.x = 0; %x_center of the ramp
-    params.model.geom.ramp.y = 1+params.model.geom.wheel.r; %y_center of the ramp
+    params.model.geom.ramp.x = 3; %x_center of the ramp
+    params.model.geom.ramp.y = params.model.geom.ramp.r+params.model.geom.wheel.r; %y_center of the ramp
     
     params.model.geom.bw_fw.l = 0.34477; % distance between the two wheels
     
     params.model.geom.bw_com.l = 0.22757; % straight line distance between back wheel and CoM
     params.model.geom.bw_com.theta = 1.101; %Initial angle between back wheel and CoM
 
-%     params.model.geom.fw_com.l = 0.31584;% straight line distance between back wheel and CoM
-%     params.model.geom.fw_com.theta = 2.464; %Initial angle between back wheel and CoM
+    params.model.geom.fw_com.l = 0.31584;% straight line distance between back wheel and CoM
+    params.model.geom.fw_com.theta = 2.464; %Initial angle between back wheel and CoM
 
     params.viz.colors.body = [0.5 0.5 0.5];
     params.viz.colors.leg = [0.25 0.25 0.25];
@@ -51,13 +51,13 @@ function params = init_params
     params.viz.colors.tracers.body = 'r';
     params.viz.colors.tracers.leg = 'g';
     params.viz.colors.tracers.wheels = 'b';
-    params.viz.axis_lims = [-1,3,-1,3];
+    params.viz.axis_lims = [-0.1,8,-0.1,4];
     params.viz.dt = 0.05;
 
     % parameters related to simulating (integrating) the dynamics forward
     % in time:
     params.sim.ICs.x_bf = 0;      % initial positions
-    params.sim.ICs.y_bf = 2*params.model.geom.ramp.r+params.model.geom.wheel.r;
+    params.sim.ICs.y_bf = params.model.geom.wheel.r;
     params.sim.ICs.theta_com = 0;
     params.sim.ICs.theta_fw = 0;
     params.sim.ICs.theta_bw = 0;
@@ -73,5 +73,5 @@ function params = init_params
     params.sim.constraints.number = 6;  % total number of constraint equations
     
     % list of ground constraints True if wheel is on the ground; False otherwise
-    params.sim.constraints = ['true','false']; % [back wheel, front wheel]
+    params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
 end
