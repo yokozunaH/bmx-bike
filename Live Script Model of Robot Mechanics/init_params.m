@@ -78,4 +78,7 @@ function params = init_params
     
     % list of ground constraints True if wheel is on the ground; False otherwise
     params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
+    
+    %Change simulation to wheelie or backflip trick
+    params.sim.trick = 'Backflip';
 end
