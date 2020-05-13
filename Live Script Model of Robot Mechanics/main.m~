@@ -63,7 +63,7 @@ while params.sim.tfinal - t_curr > params.sim.dt
     x_IC = xsim(end,:); % set the initial condition to where the integration stopped
     
     % if the simulation ended early, specify the new set of constraints
-    if  params.sim.tfinal - tseg(end) > params.sim.dt
+    if  params.sim.tfinal - tseg(end) > params.sim.dt && x_IC(1)>2.7
         switch params.sim.constraints
             case ['flat_ground'] %both wheels are on the ground
                 disp("Changed Constraint!")
@@ -173,7 +173,7 @@ switch params.sim.constraints
         dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
         dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
         F_calc = Fnow;
-        x_fw_ramp = x(1) - params.model.geom.ramp.x-;
+        x_fw_ramp = x(1) - params.model.geom.ramp.x;
         
     case ['fw_ramp'] % front wheel is on the ramp
         A = A_all([2,6],:);
@@ -183,7 +183,7 @@ switch params.sim.constraints
         Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
         dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
         dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
-        x_bw_ramp = x(1) - params.model.geom.ramp.x;
+        x_bw_ramp = x(1) - params.model.geom.ramp.x-params.model.geom.body.w;
     
     case ['bw_ramp'] % both wheels on the ramp
         A = A_all([5,6],:);
@@ -195,8 +195,9 @@ switch params.sim.constraints
         dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
         
         %vertical height between fw and bw on the ramp
-        height_fw_bw = params.model.geom.body.w*cos(0.5*acos(1-(params.model.geom.body.w^2/(2*params.model.geom.ramp.r^2))));
-        y_fw_top = x(2) - (params.model.geom.ramp.y - height_fw_bw);
+        %height_fw_bw = params.model.geom.body.w*cos(0.5*acos(1-(params.model.geom.body.w^2/(2*params.model.geom.ramp.r^2))));
+        
+        y_fw_top = x(2) - (params.model.geom.ramp.h - height_fw_bw);%(params.model.geom.ramp.y - height_fw_bw);
         
     case ['fw_airborne'] % front wheel leves the ramp
         A = A_all([5],:);
@@ -245,22 +246,22 @@ end
      case ['flat_ground']
          value = x_fw_ramp; % use the value corresponding to the front wheel constraint
          isterminal = 1; % tell ode45 to terminate if the event has occured
-         direction = 1; % tell ode45 to look for a positive constraint force as the event
+         direction = 0; % tell ode45 to look for a positive constraint force as the event
          
      case ['fw_ramp']
          value = x_bw_ramp;
          isterminal = 1;
-         direction = 1;
+         direction = 0;
          
      case ['bw_ramp']
          value = y_fw_top;
          isterminal = 1;
-         direction = 1;
+         direction = 0;
          
      case ['fw_airborne']
          value = y_bw_top;
          isterminal = 1;
-         direction = 1;
+         direction = 0;
          
      case ['bw_airborne']
          value = 1;

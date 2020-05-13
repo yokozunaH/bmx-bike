@@ -190,7 +190,14 @@ circle(wheel_fw.curr.center(1),wheel_fw.curr.center(2),params.model.geom.wheel.r
 segment(wheel_bw.curr.center(1), wheel_bw.curr.center(2),wheel_bw.curr.radius(1),wheel_bw.curr.radius(2), 'red');
 segment(wheel_fw.curr.center(1), wheel_fw.curr.center(2),wheel_fw.curr.radius(1),wheel_fw.curr.radius(2), 'red');
 
-%Create back curve
+%Create ramp curve
+th = 3*pi/2:pi/50:(3*pi/2 +params.model.geom.ramp.theta);
+x_ramp = (params.model.geom.ramp.r + params.model.geom.wheel.r) * cos(th) + params.model.geom.ramp.center.x;
+y_ramp = (params.model.geom.ramp.r + params.model.geom.wheel.r) * sin(th) + params.model.geom.ramp.center.y;
+plot(x_ramp, y_ramp, 'k');
+segment(x_ramp(end),y_ramp(end),x_ramp(end) + params.model.geom.ramp.width, y_ramp(end), 'k');
+segment(x_ramp(end) + params.model.geom.ramp.width,y_ramp(end),x_ramp(end) + params.model.geom.ramp.width, 0, 'k');
+
 %circle(body.curr.corners(1,1),q(2)+0.03, 0.35*params.model.geom.body.h,params.viz.colors.body);
 
 %Add Marker for CoM

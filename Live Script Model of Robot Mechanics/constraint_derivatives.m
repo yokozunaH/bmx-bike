@@ -23,8 +23,8 @@ theta_com = x(3);
 r_bw = params.model.geom.wheel.r;
 r_fw = params.model.geom.wheel.r;
 bw_fw_distance = params.model.geom.bw_fw.l;
-x_ramp = params.model.geom.ramp.x;
-y_ramp = params.model.geom.ramp.y;
+x_ramp = params.model.geom.ramp.center.x;
+y_ramp = params.model.geom.ramp.center.y;
 r_ramp = params.model.geom.ramp.r;
 
 x_bf = x(1);
