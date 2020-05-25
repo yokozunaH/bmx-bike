@@ -60,7 +60,7 @@ y_mw = (l_com+offset)*(sin(theta_bike));
 
 g_wbike = [[cos(theta_bike),-sin(theta_bike), 0];  %base-frame is the world frame
           [sin(theta_bike),cos(theta_bike), 0];
-          [0, 0, 1]]
+          [0, 0, 1]];
 
 g_bike_mw = [[cos(theta_mw),-sin(theta_mw),x_mw];
              [sin(theta_mw),cos(theta_mw),y_mw];
