@@ -216,9 +216,12 @@ switch params.sim.trick
 
                 %vertical height between fw and bw on the ramp
                 %height_fw_bw = params.model.geom.body.w*cos(0.5*acos(1-(params.model.geom.body.w^2/(2*params.model.geom.ramp.r^2))));
-                height_fw_bw = params.model.geom.bw_com.l*cos(x(3));
+                height_fw_bw = params.model.geom.bw_fw.l*cos(x(3));
                 y_fw_top = x(2) - (params.model.geom.ramp.h - height_fw_bw);%(params.model.geom.ramp.y - height_fw_bw);
-
+%                 if y_fw_top > 0.06
+%                     y_fw_top = 0
+%                 end
+                
             case ['fw_airborne'] % front wheel leves the ramp
                 A = A_all([5],:);
                 Adotqdot = [q_dot'*Hessian(:,:,5)*q_dot];  % only frontwheel leaves the ramp
