@@ -34,7 +34,7 @@ function params = init_params
     params.model.geom.wheel.r = 0.0625; % radius of wheels
     
     %Ramp paramaters
-    params.model.geom.ramp.theta = pi/2;
+    params.model.geom.ramp.theta = pi/3;
     params.model.geom.ramp.r = 0.6;%params.model.geom.ramp.h/(1-cos(params.model.geom.ramp.theta); %radius of the ramp
     params.model.geom.ramp.h = params.model.geom.ramp.r*(1-cos(params.model.geom.ramp.theta));
     params.model.geom.ramp.center.x = 3; %x_center of the ramp
