@@ -22,7 +22,7 @@ function params = init_params
      params.model.dyn.com.I = 0.1225; % moment of inertia of com
 
      params.model.dyn.g = 9.81;      % acceleration due to gravity
-     params.model.dyn.tau_bw = -3.5;    % applied torque from the backwheel
+     params.model.dyn.tau_bw = -1;    % applied torque from the backwheel
      
     % parameters that help with visualizing the robot:
     params.model.geom.body.w = 0.3; % width of the bike body
@@ -38,7 +38,7 @@ function params = init_params
     params.model.geom.ramp.r = 0.6;%params.model.geom.ramp.h/(1-cos(params.model.geom.ramp.theta); %radius of the ramp
     params.model.geom.ramp.h = params.model.geom.ramp.r*(1-cos(params.model.geom.ramp.theta));
     params.model.geom.ramp.center.x = 3; %x_center of the ramp
-    params.model.geom.ramp.center.y = params.model.geom.ramp.r+params.model.geom.wheel.r; %y_center of the ramp
+    params.model.geom.ramp.center.y = params.model.geom.ramp.r + params.model.geom.wheel.r; %y_center of the ramp
     params.model.geom.ramp.width = 0.6;
     
     params.model.geom.bw_fw.l = 0.34477; % distance between the two wheels

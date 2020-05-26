@@ -40,11 +40,12 @@ t_curr = 0;
 F_calc = [];
 tsim = [];
 xsim = [];
+xfin = [];
 
 x_fw_ramp = 100; %x_position when the frontwheel hits the ramp
 x_bw_ramp = 100; %x_position when the backwheel hits the ramp
-y_fw_top = 100;  %y_position when the frontwheel leaves the ramp
-y_bw_top = 100;  %y_position when the backwheel leaves the ramp
+fw_ang_compare = 100;  %y_position when the frontwheel leaves the ramp
+bw_ang_compare = 100;  %y_position when the backwheel leaves the ramp
 
 % Set integration options - mainly events
 options = odeset('Events',@robot_events);
@@ -59,6 +60,8 @@ while params.sim.tfinal - t_curr > params.sim.dt
     tsim = [tsim;tseg]; % build up the time vector after each event
     xsim = [xsim;xseg]; % build up the calculated state after each event
     
+    xfin = xseg(end,:);
+    
     t_curr = tsim(end); % set the current time to where the integration stopped
     x_IC = xsim(end,:); % set the initial condition to where the integration stopped
     
@@ -68,7 +71,7 @@ while params.sim.tfinal - t_curr > params.sim.dt
             
             case 'Backflip'
                 
-                if  params.sim.tfinal - tseg(end) > params.sim.dt && x_IC(1)>2.7 %FIXME this second condition should be necessary!
+                if  params.sim.tfinal - tseg(end) > params.sim.dt %&& x_IC(1)>2.7 %FIXME this second condition should be necessary!
                     %but backflip constraints only work when this is true
                     %(x(1) jumps drastically while being integrated) find a
                     %way to correct this or add a better condition
@@ -76,16 +79,16 @@ while params.sim.tfinal - t_curr > params.sim.dt
                     switch params.sim.constraints
 
                         case ['flat_ground'] %both wheels are on the ground
-                            disp("Changed Constraint!")
+                            disp("FW is on the ramp!")
                             params.sim.constraints = ['fw_ramp'];
                         case ['fw_ramp']     %only the front wheel is on the ramp
-                            disp("Changed Constraint!")
+                            disp("BW is on the ramp!")
                             params.sim.constraints = ['bw_ramp'];
                         case ['bw_ramp']     %both wheels are on the ramp
-                            disp("Changed Constraint!")
+                            disp("FW has left the ramp")
                             params.sim.constraints = ['fw_airborne'];
                         case ['fw_airborne']     %frontwheels leaves the ramp
-                            disp("Changed Constraint!")
+                            disp("BW has left the ramp")
                             params.sim.constraints = ['bw_airborne'];
                     end
                     
@@ -103,7 +106,7 @@ while params.sim.tfinal - t_curr > params.sim.dt
                     end
                           
                 end
-    end         
+        end         
 end
 
 % transpose xsim_passive so that it is 5xN (N = number of timesteps):
@@ -166,7 +169,7 @@ q_dot = x(nq+1:2*nq);
 
 tau = params.model.dyn.tau_bw * 0.05;
 
-if t > 1
+if t < 1
     tau = params.model.dyn.tau_bw;
 end
 
@@ -193,22 +196,24 @@ switch params.sim.trick
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
                 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
-                x_fw_ramp = x(1) - params.model.geom.ramp.center.x;
+                x_fw_ramp = (x(1) + params.model.geom.bw_fw.l) - params.model.geom.ramp.center.x;
 
             case ['fw_ramp'] % front wheel is on the ramp
-                A = A_all([2,6],:);
-                Adotqdot = [q_dot'*Hessian(:,:,2)*q_dot;  % backwheel y-constraint
-                            q_dot'*Hessian(:,:,6)*q_dot];  % frontwheel is on the ramp
+                A = A_all([1,2,6],:);
+                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
+                            q_dot'*Hessian(:,:,2)*q_dot;  % backwheel flat ground constraint
+                            q_dot'*Hessian(:,:,6)*q_dot]; % frontwheel ramp constraint
 
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
                 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
-                x_bw_ramp = x(1) - params.model.geom.ramp.center.x-params.model.geom.body.w;
+                x_bw_ramp = x(1) - params.model.geom.ramp.center.x;
 
             case ['bw_ramp'] % both wheels on the ramp
-                A = A_all([5,6],:);
-                Adotqdot = [q_dot'*Hessian(:,:,5)*q_dot;  % backwheel y-constraint
-                            q_dot'*Hessian(:,:,6)*q_dot];  % frontwheel is on the ramp
+                A = A_all([1,5,6],:);
+                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
+                            q_dot'*Hessian(:,:,5)*q_dot;  % backwheel ramp constraint
+                            q_dot'*Hessian(:,:,6)*q_dot]; % frontwheel ramp constraint
 
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
@@ -216,17 +221,74 @@ switch params.sim.trick
 
                 %vertical height between fw and bw on the ramp
                 %height_fw_bw = params.model.geom.body.w*cos(0.5*acos(1-(params.model.geom.body.w^2/(2*params.model.geom.ramp.r^2))));
-                height_fw_bw = params.model.geom.bw_fw.l*cos(x(3));
-                y_fw_top = x(2) - (params.model.geom.ramp.h - height_fw_bw);%(params.model.geom.ramp.y - height_fw_bw);
+%                 height_fw_bw = params.model.geom.bw_fw.l*cos(x(3));
+%                 y_fw_top = x(2) - (params.model.geom.ramp.h - height_fw_bw);%(params.model.geom.ramp.y - height_fw_bw);
+
+                % Find the angle from the start of the ramp to the ramp
+                % center to the fw center
+                
+                % Point C
+                x_fw = x(1) + (params.model.geom.bw_fw.l)*cos(x(3));
+                y_fw = x(2) + (params.model.geom.bw_fw.l)*sin(x(3));
+
+                % Point B
+                ramp_center_x = params.model.geom.ramp.center.x;
+                ramp_center_y = params.model.geom.ramp.r;
+                
+                % Point A
+                ramp_start_x = params.model.geom.ramp.center.x;
+                ramp_start_y = params.model.geom.wheel.r;
+                
+                vec_BA = [ramp_start_x - ramp_center_x, ramp_start_y - ramp_center_y];
+                
+                vec_BC = [x_fw - ramp_center_x, y_fw - ramp_center_y];
+                
+                mag_BA = sqrt(vec_BA(1)^2 + vec_BA(2)^2);
+                mag_BC = sqrt(vec_BC(1)^2 + vec_BC(2)^2);
+                
+                dot_vecs = dot(vec_BA, vec_BC);
+                mags = mag_BA*mag_BC;
+
+                ang_ramp_fw = acos(dot_vecs / mags);
+                
+                fw_ang_compare = ang_ramp_fw - params.model.geom.ramp.theta;
                 
             case ['fw_airborne'] % front wheel leves the ramp
-                A = A_all([5],:);
-                Adotqdot = [q_dot'*Hessian(:,:,5)*q_dot];  % only frontwheel leaves the ramp
+                A = A_all([1,5],:);
+                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
+                            q_dot'*Hessian(:,:,5)*q_dot];  % backwheel ramp constraint
 
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
                 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
-                y_bw_top = x(2) - params.model.geom.ramp.center.y;
+                
+                % y_bw_top = x(2) - params.model.geom.ramp.center.y;
+                
+                % Find the angle from the start of the ramp to the ramp
+                % center to the fw center
+                
+                % Point C - the state vector x(1) and x(2)
+               
+                % Point B
+                ramp_center_x = params.model.geom.ramp.center.x;
+                ramp_center_y = params.model.geom.ramp.r;
+                
+                % Point A
+                ramp_start_x = params.model.geom.ramp.center.x;
+                ramp_start_y = params.model.geom.wheel.r;
+                
+                vec_BA = [ramp_start_x - ramp_center_x, ramp_start_y - ramp_center_y];
+                vec_BC = [x(1) - ramp_center_x, x(2) - ramp_center_y];
+                
+                mag_BA = sqrt(vec_BA(1)^2 + vec_BA(2)^2)
+                mag_BC = sqrt(vec_BC(1)^2 + vec_BC(2)^2)
+                
+                dot_vecs = dot(vec_BA, vec_BC);
+                mags = mag_BA*mag_BC;
+
+                ang_ramp_bw = acos(dot_vecs / mags);
+                
+                bw_ang_compare = ang_ramp_bw - params.model.geom.ramp.theta;
 
             case ['bw_airborne'] % both wheels leaves the ramp
                 dx(1:nq) = eye(nq)*x(6:10);
@@ -284,26 +346,30 @@ switch params.sim.trick
              case ['flat_ground']
                  value = x_fw_ramp; % use the value corresponding to the front wheel constraint
                  isterminal = 1; % tell ode45 to terminate if the event has occured
-                 direction = 0; % tell ode45 to look for a positive constraint force as the event
+                 direction = 1; % tell ode45 to look for a positive constraint force as the event
 
              case ['fw_ramp']
+                 
                  value = x_bw_ramp;
                  isterminal = 1;
                  direction = 0;
 
              case ['bw_ramp']
-                 value = y_fw_top;
+                 
+                 disp(fw_ang_compare);
+                 
+                 value = fw_ang_compare;
                  isterminal = 1;
                  direction = 0;
 
              case ['fw_airborne']
-                 value = y_bw_top;
+                 value = bw_ang_compare;
                  isterminal = 1;
                  direction = 0;
 
              case ['bw_airborne']
                  value = 1;
-                 isterminal = 0;
+                 isterminal = 1;
                  direction = 0;
          end
          
