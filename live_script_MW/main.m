@@ -120,7 +120,7 @@ if t > 1
     tau = params.model.dyn.tau_mw;
 end
 
-Q = [0;tau];
+Q = [tau;tau];
 
 % find the parts that don't depend on constraint forces
 H = H_eom(x,params);
@@ -129,7 +129,7 @@ Minv = inv_mass_matrix(x,params);
 
 switch params.sim.constraints
     case 'balancing'
-        disp("Changed Constraint!")
+        disp("Changed Constraint!");
         %A = A_all(1,:);
         %Adotqdot = q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
         %Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
