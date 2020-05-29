@@ -76,8 +76,8 @@ function params = init_params
     params.sim.ICs.dtheta_com = 0;
     params.sim.ICs.dtheta_fw = 0;
     params.sim.ICs.dtheta_bw = 0;
-    params.sim.tfinal = 5;          % Length of the simulation
-    params.sim.dt = 0.05;           % simulation timestep
+    params.sim.tfinal = 10;          % Length of the simulation
+    params.sim.dt = 0.005;           % simulation timestep
     
     % variables related to the constraints
     params.sim.constraints.number = 6;  % total number of constraint equations
@@ -86,5 +86,5 @@ function params = init_params
     params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
     
     %Change simulation to wheelie or backflip trick
-    params.sim.trick = 'Backflip';
+    params.sim.trick = 'Wheelie'; %'Backflip';
 end

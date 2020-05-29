@@ -35,6 +35,13 @@ x_IC = [params.sim.ICs.x_bf;
 
 t_curr = 0;
 
+% for the Controller 
+prevError = 0;
+prev_theta = 0;
+eint = 0;
+status = "NA";
+tol = 0.001; 
+
 % create a place for constraint forces populated in
 % robot_dynamic_constraints function
 F_calc = [0;0;0;0];
@@ -56,8 +63,13 @@ options = odeset('Events',@robot_events, 'RelTol',1e-3);
 while params.sim.tfinal - t_curr > params.sim.dt
         
     tspan_passive = t_curr:params.sim.dt:params.sim.tfinal;
+    switch params.sim.trick
+        case 'Backflip'
+            [tseg, xseg, ~, ~, ie] = ode15s(@robot_dynamics_constraints, tspan_passive, x_IC', options);
+        case 'Wheelie'
+            [tseg, xseg, ~, ~, ie] = ode45(@robot_dynamics_constraints, tspan_passive, x_IC', options);
+    end
     
-    [tseg, xseg, ~, ~, ie] = ode15s(@robot_dynamics_constraints, tspan_passive, x_IC', options);
 
     % extract info from the integration
     tsim = [tsim;tseg]; % build up the time vector after each event
@@ -183,11 +195,19 @@ end
  % plot the x and y position of the back wheel
  subplot(2,1,1), plot(tsim,xplot(1,:),'b-',...
                       tsim,xplot(2,:),'r-','LineWidth',2);
-                  
+ lgd1 = legend({'x position back wheel','y position back wheel'},'Location','southwest');
+ lgd1.FontSize = 10;
+ xlabel('time')
+ ylabel('position') 
+ 
  % plot the angle of the COM and the back wheel
- subplot(2,1,2), plot(tsim,xplot(3,:),'b:',...
-                      tsim,xplot(4,:),'r:','LineWidth',2);
-
+ %subplot(2,1,2), plot(tsim,xplot(3,:),'b:',...
+ %                     tsim,xplot(4,:),'r:','LineWidth',2);
+ subplot(2,1,2), plot(tsim,xplot(3,:),'r:','LineWidth',2);
+ lgd2 = legend({'angle COM','angle back wheel'},'Location','southwest');
+ lgd2.FontSize = 10; 
+ xlabel('time')
+ ylabel('angle')
  pause(1); % helps prevent animation from showing up on the wrong figure
  
 % Let's resample the simulator output so we can animate with evenly-spaced
@@ -228,203 +248,227 @@ function [dx] = robot_dynamics_constraints(t,x)
 % Outputs:
 %   dx: derivative of state x with respect to time.
 % for convenience, define q_dot
-dx = zeros(numel(x),1);
-nq = numel(x)/2;    % assume that x = [q;q_dot];
-q_dot = x(nq+1:2*nq);
+    dx = zeros(numel(x),1);
+    nq = numel(x)/2;    % assume that x = [q;q_dot];
+    q_dot = x(nq+1:2*nq);
 
-tau = params.model.dyn.tau_bw * 0.05;
+    theta_bw = x(4);    % Angular Position of back wheel
+    dtheta_bw = x(9);   % Angular Velocity of back wheel
+    theta_COM = x(3);   % Angular Position of COM
+    omega_est = (theta_bw-prev_theta)/params.sim.dt;    % Use encoder count to approximate angular velocity
+    prev_theta = theta_bw;      % Store last used angular position
 
-switch params.sim.trick
     
-    case 'Wheelie'
-        if t > 1 && t < 1.15
-            tau = params.model.dyn.tau_bw;
-        elseif t < 1.3 && t > 1.15
-            tau = 0;
-        elseif t > 2
-            tau = params.model.dyn.tau_bw*0.1;
-        end
-    case 'Backflip' 
-        
-        if t < 0.5
-            tau = params.model.dyn.tau_bw;
-        elseif t < 0.75 && t > 0.5
-            tau = params.model.dyn.tau_bw*(1-(t-.5)/.25);
-        else
-            tau = 0;
-        end
-end
+    switch params.sim.trick
+
+        case 'Wheelie'
+            % Wheelie %
+            %display(theta_COM)
+            if (t<0.5)
+                tau = -0.5;
+            end
+
+            if(t>=0.5&& t<0.7)
+                tau = -2.5; 
+            end
+
+            if (t>=0.7)
+                %display(theta_COM)
+                [tau_d,eint,prevError,status] = Controller(theta_COM,eint,prevError,tol);
+                tau = -Motor(tau_d,dtheta_bw); 
+                display(tau);
+            end
+
+            %display(tau)
+            % Limit torque to feasible values
+            if tau> 2.5
+                tau = 2.5;
+            elseif tau<-2.5
+                tau = -2.5;
+            end
+        case 'Backflip' 
+
+            if t < 0.5
+                tau = params.model.dyn.tau_bw;
+            elseif t < 0.75 && t > 0.5
+                tau = params.model.dyn.tau_bw*(1-(t-.5)/.25);
+            else
+                tau = 0;
+            end
+            
+            %tau = params.model.dyn.tau_bw * 0.05;
+    end
 
 
 
-Q = [0;0;0;tau;0];
+    Q = [0;0;0;tau;0];
 
-% find the parts that don't depend on constraint forces
-H = H_eom(x,params);
-Minv = inv_mass_matrix(x,params);
-[A_all,Hessian] = constraint_derivatives(x,params);
+    % find the parts that don't depend on constraint forces
+    H = H_eom(x,params);
+    Minv = inv_mass_matrix(x,params);
+    [A_all,Hessian] = constraint_derivatives(x,params);
 
-switch params.sim.trick
-    
-    case 'Backflip'
-        
-        switch params.sim.constraints
+    switch params.sim.trick
 
-            case ['flat_ground'] % both wheels on the ground
-                A = A_all([1,2,3,4],:);
-                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
-                            q_dot'*Hessian(:,:,2)*q_dot;  % backwheel y-constraint
-                            q_dot'*Hessian(:,:,3)*q_dot;  % frontwheel y-constraint
-                            q_dot'*Hessian(:,:,4)*q_dot]; % frontwheel rotation constraint
+        case 'Backflip'
 
-                Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
-                dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
-                x_fw_ramp = (x(1) + params.model.geom.bw_fw.l) - params.model.geom.ramp.center.x;
-                %if x_fw_ramp > -0.03 && x_fw_ramp < 0
-                disp("Robot dynamics x_fw")
-                disp(x_fw_ramp)
-                %end
+            switch params.sim.constraints
 
-            case ['fw_ramp'] % front wheel is on the ramp
-                A = A_all([1,2,6],:);
-                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
-                            q_dot'*Hessian(:,:,2)*q_dot;  % backwheel flat ground constraint
-                            q_dot'*Hessian(:,:,6)*q_dot]; % frontwheel ramp constraint
+                case ['flat_ground'] % both wheels on the ground
+                    A = A_all([1,2,3,4],:);
+                    Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
+                                q_dot'*Hessian(:,:,2)*q_dot;  % backwheel y-constraint
+                                q_dot'*Hessian(:,:,3)*q_dot;  % frontwheel y-constraint
+                                q_dot'*Hessian(:,:,4)*q_dot]; % frontwheel rotation constraint
 
-                Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
-                dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
-                x_bw_ramp = x(1) - params.model.geom.ramp.center.x;
-                disp("FW on the ramp")
+                    Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                    dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                    dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                    x_fw_ramp = (x(1) + params.model.geom.bw_fw.l) - params.model.geom.ramp.center.x;
+                    %if x_fw_ramp > -0.03 && x_fw_ramp < 0
+                    disp("Robot dynamics x_fw")
+                    disp(x_fw_ramp)
+                    %end
 
-            case ['bw_ramp'] % both wheels on the ramp
-                A = A_all([1,5,6],:);
-                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
-                            q_dot'*Hessian(:,:,5)*q_dot;  % backwheel ramp constraint
-                            q_dot'*Hessian(:,:,6)*q_dot]; % frontwheel ramp constraint
+                case ['fw_ramp'] % front wheel is on the ramp
+                    A = A_all([1,2,6],:);
+                    Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
+                                q_dot'*Hessian(:,:,2)*q_dot;  % backwheel flat ground constraint
+                                q_dot'*Hessian(:,:,6)*q_dot]; % frontwheel ramp constraint
 
-                Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
-                dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                    Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                    dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                    dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                    x_bw_ramp = x(1) - params.model.geom.ramp.center.x;
+                    disp("FW on the ramp")
 
-                %vertical height between fw and bw on the ramp
-                %height_fw_bw = params.model.geom.body.w*cos(0.5*acos(1-(params.model.geom.body.w^2/(2*params.model.geom.ramp.r^2))));
-%                 height_fw_bw = params.model.geom.bw_fw.l*cos(x(3));
-%                 y_fw_top = x(2) - (params.model.geom.ramp.h - height_fw_bw);%(params.model.geom.ramp.y - height_fw_bw);
+                case ['bw_ramp'] % both wheels on the ramp
+                    A = A_all([1,5,6],:);
+                    Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
+                                q_dot'*Hessian(:,:,5)*q_dot;  % backwheel ramp constraint
+                                q_dot'*Hessian(:,:,6)*q_dot]; % frontwheel ramp constraint
 
-                % Find the angle from the start of the ramp to the ramp
-                % center to the fw center
-                
-                % Point C
-                x_fw = x(1) + (params.model.geom.bw_fw.l)*cos(x(3));
-                y_fw = x(2) + (params.model.geom.bw_fw.l)*sin(x(3));
+                    Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                    dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                    dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
 
-                % Point B
-                ramp_center_x = params.model.geom.ramp.center.x;
-                ramp_center_y = params.model.geom.ramp.r;
-                
-                % Point A
-                ramp_start_x = params.model.geom.ramp.center.x;
-                ramp_start_y = params.model.geom.wheel.r;
-                
-                vec_BA = [ramp_start_x - ramp_center_x, ramp_start_y - ramp_center_y];
-                
-                vec_BC = [x_fw - ramp_center_x, y_fw - ramp_center_y];
-                
-                mag_BA = sqrt(vec_BA(1)^2 + vec_BA(2)^2);
-                mag_BC = sqrt(vec_BC(1)^2 + vec_BC(2)^2);
-                
-                dot_vecs = dot(vec_BA, vec_BC);
-                mags = mag_BA*mag_BC;
+                    %vertical height between fw and bw on the ramp
+                    %height_fw_bw = params.model.geom.body.w*cos(0.5*acos(1-(params.model.geom.body.w^2/(2*params.model.geom.ramp.r^2))));
+    %                 height_fw_bw = params.model.geom.bw_fw.l*cos(x(3));
+    %                 y_fw_top = x(2) - (params.model.geom.ramp.h - height_fw_bw);%(params.model.geom.ramp.y - height_fw_bw);
 
-                ang_ramp_fw = acos(dot_vecs / mags);
-                
-                fw_ang_compare = ang_ramp_fw - params.model.geom.ramp.theta;
-                
-            case ['fw_airborne'] % front wheel leves the ramp
-                A = A_all([1,5],:);
-                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
-                            q_dot'*Hessian(:,:,5)*q_dot];  % backwheel ramp constraint
+                    % Find the angle from the start of the ramp to the ramp
+                    % center to the fw center
 
-                Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
-                dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
-                
-                % y_bw_top = x(2) - params.model.geom.ramp.center.y;
-                
-                % Find the angle from the start of the ramp to the ramp
-                % center to the fw center
-                
-                % Point C - the state vector x(1) and x(2)
-               
-                % Point B
-                ramp_center_x = params.model.geom.ramp.center.x;
-                ramp_center_y = params.model.geom.ramp.r;
-                
-                % Point A
-                ramp_start_x = params.model.geom.ramp.center.x;
-                ramp_start_y = params.model.geom.wheel.r;
-                
-                vec_BA = [ramp_start_x - ramp_center_x, ramp_start_y - ramp_center_y];
-                vec_BC = [x(1) - ramp_center_x, x(2) - ramp_center_y];
-                
-                mag_BA = sqrt(vec_BA(1)^2 + vec_BA(2)^2);
-                mag_BC = sqrt(vec_BC(1)^2 + vec_BC(2)^2);
-                
-                dot_vecs = dot(vec_BA, vec_BC);
-                mags = mag_BA*mag_BC;
+                    % Point C
+                    x_fw = x(1) + (params.model.geom.bw_fw.l)*cos(x(3));
+                    y_fw = x(2) + (params.model.geom.bw_fw.l)*sin(x(3));
 
-                ang_ramp_bw = acos(dot_vecs / mags);
-                
-                bw_ang_compare = ang_ramp_bw - params.model.geom.ramp.theta;
+                    % Point B
+                    ramp_center_x = params.model.geom.ramp.center.x;
+                    ramp_center_y = params.model.geom.ramp.r;
 
-            case ['bw_airborne'] % both wheels leaves the ramp
-                dx(1:nq) = eye(nq)*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H); %- A'*((A*A')\A)*q_dot/params.sim.dt;
-                c_bw = x(2) - params.model.geom.wheel.r;
-                c_fw = x(2) + params.model.geom.bw_fw.l*sin(x(3)) - params.model.geom.wheel.r;
-                
-            case ['fw_off'] % only the back wheel is on the ground
-                 A = A_all([1,2],:);
-                 Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot; % robot position x-constraint
-                             q_dot'*Hessian(:,:,2)*q_dot]; % backwheel y-constraint
-                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
-                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
-                 c_fw = params.model.geom.bw_fw.l*sin(x(3));
+                    % Point A
+                    ramp_start_x = params.model.geom.ramp.center.x;
+                    ramp_start_y = params.model.geom.wheel.r;
 
-        end
-    
-    case 'Wheelie'
-        
-        switch params.sim.constraints
+                    vec_BA = [ramp_start_x - ramp_center_x, ramp_start_y - ramp_center_y];
 
-            case ['flat_ground'] % both wheels on the ground
-                A = A_all([1,2,3,4],:);
-                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
-                            q_dot'*Hessian(:,:,2)*q_dot;  % backwheel y-constraint
-                            q_dot'*Hessian(:,:,3)*q_dot;  % frontwheel y-constraint
-                            q_dot'*Hessian(:,:,4)*q_dot]; % frontwheel rotation constraint
+                    vec_BC = [x_fw - ramp_center_x, y_fw - ramp_center_y];
 
-                Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
-                dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
-                F_calc = Fnow;
-             
+                    mag_BA = sqrt(vec_BA(1)^2 + vec_BA(2)^2);
+                    mag_BC = sqrt(vec_BC(1)^2 + vec_BC(2)^2);
 
-            case ['fw_off'] % only the back wheel is on the ground
-                 A = A_all([1,2],:);
-                 Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot; % robot position x-constraint
-                             q_dot'*Hessian(:,:,2)*q_dot]; % backwheel y-constraint
-                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
-                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
-                 c_fw = params.model.geom.bw_fw.l*sin(x(3)); % - params.model.geom.wheel.r;
-             
-        end
-        
-end
+                    dot_vecs = dot(vec_BA, vec_BC);
+                    mags = mag_BA*mag_BC;
+
+                    ang_ramp_fw = acos(dot_vecs / mags);
+
+                    fw_ang_compare = ang_ramp_fw - params.model.geom.ramp.theta;
+
+                case ['fw_airborne'] % front wheel leves the ramp
+                    A = A_all([1,5],:);
+                    Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
+                                q_dot'*Hessian(:,:,5)*q_dot];  % backwheel ramp constraint
+
+                    Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                    dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                    dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+
+                    % y_bw_top = x(2) - params.model.geom.ramp.center.y;
+
+                    % Find the angle from the start of the ramp to the ramp
+                    % center to the fw center
+
+                    % Point C - the state vector x(1) and x(2)
+
+                    % Point B
+                    ramp_center_x = params.model.geom.ramp.center.x;
+                    ramp_center_y = params.model.geom.ramp.r;
+
+                    % Point A
+                    ramp_start_x = params.model.geom.ramp.center.x;
+                    ramp_start_y = params.model.geom.wheel.r;
+
+                    vec_BA = [ramp_start_x - ramp_center_x, ramp_start_y - ramp_center_y];
+                    vec_BC = [x(1) - ramp_center_x, x(2) - ramp_center_y];
+
+                    mag_BA = sqrt(vec_BA(1)^2 + vec_BA(2)^2);
+                    mag_BC = sqrt(vec_BC(1)^2 + vec_BC(2)^2);
+
+                    dot_vecs = dot(vec_BA, vec_BC);
+                    mags = mag_BA*mag_BC;
+
+                    ang_ramp_bw = acos(dot_vecs / mags);
+
+                    bw_ang_compare = ang_ramp_bw - params.model.geom.ramp.theta;
+
+                case ['bw_airborne'] % both wheels leaves the ramp
+                    dx(1:nq) = eye(nq)*x(6:10);
+                    dx(nq+1:2*nq) = Minv*(Q - H); %- A'*((A*A')\A)*q_dot/params.sim.dt;
+                    c_bw = x(2) - params.model.geom.wheel.r;
+                    c_fw = x(2) + params.model.geom.bw_fw.l*sin(x(3)) - params.model.geom.wheel.r;
+
+                case ['fw_off'] % only the back wheel is on the ground
+                     A = A_all([1,2],:);
+                     Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot; % robot position x-constraint
+                                 q_dot'*Hessian(:,:,2)*q_dot]; % backwheel y-constraint
+                     Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                     dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                     dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                     c_fw = params.model.geom.bw_fw.l*sin(x(3));
+
+            end
+
+        case 'Wheelie'
+
+            switch params.sim.constraints
+
+                case ['flat_ground'] % both wheels on the ground
+                    A = A_all([1,2,3,4],:);
+                    Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
+                                q_dot'*Hessian(:,:,2)*q_dot;  % backwheel y-constraint
+                                q_dot'*Hessian(:,:,3)*q_dot;  % frontwheel y-constraint
+                                q_dot'*Hessian(:,:,4)*q_dot]; % frontwheel rotation constraint
+
+                    Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                    dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                    dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                    F_calc = Fnow;
+
+
+                case ['fw_off'] % only the back wheel is on the ground
+                     A = A_all([1,2],:);
+                     Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot; % robot position x-constraint
+                                 q_dot'*Hessian(:,:,2)*q_dot]; % backwheel y-constraint
+                     Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                     dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                     dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                     c_fw = params.model.geom.bw_fw.l*sin(x(3)); % - params.model.geom.wheel.r;
+                     
+            end
+
+    end
 end
  
 % Event handling Function
@@ -499,7 +543,7 @@ switch params.sim.trick
  end % end of robot_events
 
 
-% %% Control the unstable equilibrium with LQR
+%% Control the unstable equilibrium with LQR
 % A = upright_state_matrix(params);
 % B = upright_input_matrix(params);
 % 
