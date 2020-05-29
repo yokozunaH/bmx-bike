@@ -22,7 +22,7 @@ function params = init_params
      params.model.dyn.com.I = 0.1225; % moment of inertia of com
 
      params.model.dyn.g = 9.81;      % acceleration due to gravity
-     params.model.dyn.tau_bw = -2.5;    % applied torque from the backwheel
+     params.model.dyn.tau_bw = -3;    % applied torque from the backwheel
      params.model.dyn.wheel_res = 0.1;
      params.model.dyn.collision_threshold = 0.02;
      
@@ -57,7 +57,11 @@ function params = init_params
     params.viz.colors.tracers.body = 'r';
     params.viz.colors.tracers.leg = 'g';
     params.viz.colors.tracers.wheels = 'b';
-    params.viz.axis_lims = [-0.5,8,-0.1,4];
+    params.viz.axis_lims = [-0.5,8,-0.1,4]; %values when no tracking is used in animation
+    
+    params.viz.tracking = 1; %Turn on or off tracking of bike
+    params.viz.x_axis_window = [-1,4]; %these are the limits size based on the back wheel x-position
+    params.viz.y_axis_window = [-0.1,4]; %y-axis remains constant 
     params.viz.dt = 0.05;
 
     % parameters related to simulating (integrating) the dynamics forward
@@ -82,5 +86,5 @@ function params = init_params
     params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
     
     %Change simulation to wheelie or backflip trick
-    params.sim.trick = 'Wheelie';
+    params.sim.trick = 'Backflip';
 end

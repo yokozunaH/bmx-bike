@@ -209,8 +209,13 @@ end
 yline(0);
 
 hold off;
+if params.viz.tracking
+    axis([x_bf+params.viz.x_axis_window(1),x_bf+params.viz.x_axis_window(2),params.viz.y_axis_window(1),params.viz.y_axis_window(2)]);
+else
+    axis(params.viz.axis_lims);
+end
 
-axis(params.viz.axis_lims);
+
 daspect([1 1 1]) % no distortion
 
 xlabel('$x$');
