@@ -77,7 +77,7 @@ function params = init_params
     params.sim.ICs.dtheta_fw = 0;
     params.sim.ICs.dtheta_bw = 0;
     params.sim.tfinal = 10;          % Length of the simulation
-    params.sim.dt = 0.005;           % simulation timestep
+    params.sim.dt = 0.02;           % simulation timestep
     
     % variables related to the constraints
     params.sim.constraints.number = 6;  % total number of constraint equations

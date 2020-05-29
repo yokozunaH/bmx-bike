@@ -5,9 +5,9 @@ status = "NA";
 
 params = init_params;
 if (params.sim.trick =="Backflip")
-    Kp = 100;
+    Kp = 80;
     Ki = 5;
-    Kd = 8; %1;
+    Kd = 50; %1;
     
     set = -12.6; % speed calculated from winter quarter 
     error = set-state;
