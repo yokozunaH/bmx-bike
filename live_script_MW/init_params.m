@@ -14,7 +14,7 @@
 function params = init_params
     % parameters that appear in the dynamics:
      params.model.dyn.com.m = 5;    % mass of the bike body
-     params.model.dyn.mw.m = 0.67;    % mass of momentum wheel
+     params.model.dyn.mw.m = 0.647;    % mass of momentum wheel
 
      params.model.dyn.mw.I = 0.00127; % moment of inertia of MW
      params.model.dyn.com.I = 0.069; % moment of inertia of com
@@ -23,7 +23,7 @@ function params = init_params
      params.model.dyn.mw.offset = 0; % offset between CoM and MW
 
      params.model.dyn.g = 9.81;      % acceleration due to gravity
-     params.model.dyn.tau_mw = 2;    % applied torque from the backwheel
+     params.model.dyn.tau_mw = 0;    % applied torque from the backwheel
      
     % parameters that help with visualizing the bike and MW:
     params.model.geom.body.h = 0.3; % height of the bike body
@@ -39,7 +39,7 @@ function params = init_params
 
     % parameters related to simulating (integrating) the dynamics forward
     % in time:
-    params.sim.ICs.theta_bike = pi/4;  % initial positions
+    params.sim.ICs.theta_bike = pi/2-0.1;  % initial positions
     params.sim.ICs.theta_mw = 0;
     
     params.sim.ICs.dtheta_bike = 0;     % initial velocities

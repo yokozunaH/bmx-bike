@@ -21,9 +21,10 @@ m_bike = params.model.dyn.com.m;
 l_com = params.model.dyn.com.l;
 m_mw =  params.model.dyn.mw.m;
 offset = params.model.dyn.mw.offset;
+theta_bike = params.sim.ICs.theta_bike;
 
 %function H = autogen_H_eom(theta_bike,g,m_bike,l_com)
-H = autogen_H_eom(dtheta_bike,g,l_com,m_bike,m_mw,offset,theta_bike);
+H = autogen_H_eom(g,l_com,m_bike,m_mw,theta_bike);
 
 end
 
