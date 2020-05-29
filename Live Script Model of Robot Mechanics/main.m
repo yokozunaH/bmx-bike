@@ -37,7 +37,7 @@ t_curr = 0;
 
 % create a place for constraint forces populated in
 % robot_dynamic_constraints function
-F_calc = [];
+F_calc = [0;0;0;0];
 tsim = [];
 xsim = [];
 xfin = [];
@@ -47,15 +47,18 @@ x_bw_ramp = 100; %x_position when the backwheel hits the ramp
 fw_ang_compare = 100;  %y_position when the frontwheel leaves the ramp
 bw_ang_compare = 100;  %y_position when the backwheel leaves the ramp
 
+c_fw = 0;
+c_bw = 0;
+
 % Set integration options - mainly events
-options = odeset('Events',@robot_events);
+options = odeset('Events',@robot_events, 'RelTol',1e-3);
 
 while params.sim.tfinal - t_curr > params.sim.dt
         
     tspan_passive = t_curr:params.sim.dt:params.sim.tfinal;
     
-    [tseg, xseg, ~, ~, ~] = ode45(@robot_dynamics_constraints, tspan_passive, x_IC', options);
-    
+    [tseg, xseg, ~, ~, ie] = ode15s(@robot_dynamics_constraints, tspan_passive, x_IC', options);
+
     % extract info from the integration
     tsim = [tsim;tseg]; % build up the time vector after each event
     xsim = [xsim;xseg]; % build up the calculated state after each event
@@ -65,6 +68,7 @@ while params.sim.tfinal - t_curr > params.sim.dt
     t_curr = tsim(end); % set the current time to where the integration stopped
     x_IC = xsim(end,:); % set the initial condition to where the integration stopped
     
+    x_fw = x_IC(1) + params.model.geom.bw_fw.l;
     % if the simulation ended early, specify the new set of constraints
         
         switch params.sim.trick
@@ -80,16 +84,60 @@ while params.sim.tfinal - t_curr > params.sim.dt
 
                         case ['flat_ground'] %both wheels are on the ground
                             disp("FW is on the ramp!")
+                            disp(tseg(end))
+                            %disp(x_IC(1) + params.model.geom.bw_fw.l)
                             params.sim.constraints = ['fw_ramp'];
                         case ['fw_ramp']     %only the front wheel is on the ramp
                             disp("BW is on the ramp!")
+                            disp(tseg(end))
                             params.sim.constraints = ['bw_ramp'];
                         case ['bw_ramp']     %both wheels are on the ramp
                             disp("FW has left the ramp")
+                            disp(tseg(end))
                             params.sim.constraints = ['fw_airborne'];
                         case ['fw_airborne']     %frontwheels leaves the ramp
                             disp("BW has left the ramp")
+                            disp(tseg(end))
                             params.sim.constraints = ['bw_airborne'];
+                            
+                        case ['bw_airborne']
+                             fw_h = x_IC(2) + params.model.geom.bw_fw.l*sin(x_IC(3));
+                             if(x_IC(2) < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
+                                 disp("BW Collision")
+                                 [A_unilateral,~] = constraint_derivatives(x_IC,params); 
+                                 A_col = A_unilateral(2,:); %add new constraint row to A matrix
+                                 restitution = 1 + params.model.dyn.wheel_res; %restitiution being zero
+                                 Minv_col = inv_mass_matrix(x_IC,params);
+                                 x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
+                                % Often in a collision, the constraint forces will be violated
+                                % immediately, rendering event detection useless since it requires a
+                                % smoothly changing variable.  Therefore, we need to check the
+                                % constraint forces and turn them off if they act in the wrong
+                                % direction
+                                if x_IC(2) > 0 && x_IC(2) < params.model.geom.wheel.r + 0.005%+params.model.dyn.collision_threshold
+                                    disp('Put Backwheel constraint on again')
+                                    params.sim.constraints = ['fw_off'];
+                                end
+
+                             elseif(fw_h < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
+                                     disp("FW Collision")
+                                     [A_unilateral,~] = constraint_derivatives(x_IC,params); 
+                                     A_col = A_unilateral(3,:); %add new constraint row to A matrix
+                                     restitution = 1 + params.model.dyn.wheel_res; %restitiution being zero
+                                     Minv_col = inv_mass_matrix(x_IC,params);
+                                     x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
+                                    % Often in a collision, the constraint forces will be violated
+                                    % immediately, rendering event detection useless since it requires a
+                                    % smoothly changing variable.  Therefore, we need to check the
+                                    % constraint forces and turn them off if they act in the wrong
+                                    % direction
+                                    if fw_h > 0 && fw_h < params.model.geom.wheel.r + 0.005; %params.model.dyn.collision_threshold
+                                        disp('Put frontwheel constraint on again')
+                                        params.sim.constraints = ['flat_ground'];
+                                    end
+
+                             end
+                            
                     end
                     
                 end
@@ -103,6 +151,23 @@ while params.sim.tfinal - t_curr > params.sim.dt
                          case ['flat_ground'] % both wheels are on the ground
                              disp("Changed Constraint!")
                              params.sim.constraints = ['fw_off']; % the front wheel is now off the ground    end
+                         case ['fw_off'] % both wheels are on the ground
+                            disp("Collision!")                           
+                            [A_unilateral,~] = constraint_derivatives(x_IC,params); 
+                            A_col = A_unilateral(3,:); %add new constraint row to A matrix
+                            restitution = 1 + params.model.dyn.wheel_res; %restitiution being zero
+                            Minv_col = inv_mass_matrix(x_IC,params);
+                            % compute the change in velocity due to collision impulses
+                            x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
+                            % Often in a collision, the constraint forces will be violated
+                            % immediately, rendering event detection useless since it requires a
+                            % smoothly changing variable.  Therefore, we need to check the
+                            % constraint forces and turn them off if they act in the wrong
+                            % direction
+                             if x_IC(3) > 0 && x_IC(3) < params.model.dyn.collision_threshold
+                                 disp('Put frontwheel constraint on again')
+                                 params.sim.constraints = ['flat_ground'];
+                             end
                     end
                           
                 end
@@ -169,9 +234,28 @@ q_dot = x(nq+1:2*nq);
 
 tau = params.model.dyn.tau_bw * 0.05;
 
-if t < 1
-    tau = params.model.dyn.tau_bw;
+switch params.sim.trick
+    
+    case 'Wheelie'
+        if t > 1 && t < 1.15
+            tau = params.model.dyn.tau_bw;
+        elseif t < 1.3 && t > 1.15
+            tau = 0;
+        elseif t > 2
+            tau = params.model.dyn.tau_bw*0.1;
+        end
+    case 'Backflip' 
+        
+        if t < 0.5
+            tau = params.model.dyn.tau_bw;
+        elseif t < 0.75 && t > 0.5
+            tau = params.model.dyn.tau_bw*(1-(t-.5)/.25);
+        else
+            tau = 0;
+        end
 end
+
+
 
 Q = [0;0;0;tau;0];
 
@@ -195,8 +279,12 @@ switch params.sim.trick
 
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
+                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
                 x_fw_ramp = (x(1) + params.model.geom.bw_fw.l) - params.model.geom.ramp.center.x;
+                %if x_fw_ramp > -0.03 && x_fw_ramp < 0
+                disp("Robot dynamics x_fw")
+                disp(x_fw_ramp)
+                %end
 
             case ['fw_ramp'] % front wheel is on the ramp
                 A = A_all([1,2,6],:);
@@ -206,8 +294,9 @@ switch params.sim.trick
 
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
+                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
                 x_bw_ramp = x(1) - params.model.geom.ramp.center.x;
+                disp("FW on the ramp")
 
             case ['bw_ramp'] % both wheels on the ramp
                 A = A_all([1,5,6],:);
@@ -217,7 +306,7 @@ switch params.sim.trick
 
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
+                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
 
                 %vertical height between fw and bw on the ramp
                 %height_fw_bw = params.model.geom.body.w*cos(0.5*acos(1-(params.model.geom.body.w^2/(2*params.model.geom.ramp.r^2))));
@@ -260,7 +349,7 @@ switch params.sim.trick
 
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
+                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
                 
                 % y_bw_top = x(2) - params.model.geom.ramp.center.y;
                 
@@ -280,8 +369,8 @@ switch params.sim.trick
                 vec_BA = [ramp_start_x - ramp_center_x, ramp_start_y - ramp_center_y];
                 vec_BC = [x(1) - ramp_center_x, x(2) - ramp_center_y];
                 
-                mag_BA = sqrt(vec_BA(1)^2 + vec_BA(2)^2)
-                mag_BC = sqrt(vec_BC(1)^2 + vec_BC(2)^2)
+                mag_BA = sqrt(vec_BA(1)^2 + vec_BA(2)^2);
+                mag_BC = sqrt(vec_BC(1)^2 + vec_BC(2)^2);
                 
                 dot_vecs = dot(vec_BA, vec_BC);
                 mags = mag_BA*mag_BC;
@@ -292,7 +381,18 @@ switch params.sim.trick
 
             case ['bw_airborne'] % both wheels leaves the ramp
                 dx(1:nq) = eye(nq)*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H);
+                dx(nq+1:2*nq) = Minv*(Q - H); %- A'*((A*A')\A)*q_dot/params.sim.dt;
+                c_bw = x(2) - params.model.geom.wheel.r;
+                c_fw = x(2) + params.model.geom.bw_fw.l*sin(x(3)) - params.model.geom.wheel.r;
+                
+            case ['fw_off'] % only the back wheel is on the ground
+                 A = A_all([1,2],:);
+                 Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot; % robot position x-constraint
+                             q_dot'*Hessian(:,:,2)*q_dot]; % backwheel y-constraint
+                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                 c_fw = params.model.geom.bw_fw.l*sin(x(3));
 
         end
     
@@ -309,7 +409,7 @@ switch params.sim.trick
 
                 Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                 dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
+                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
                 F_calc = Fnow;
              
 
@@ -319,8 +419,8 @@ switch params.sim.trick
                              q_dot'*Hessian(:,:,2)*q_dot]; % backwheel y-constraint
                  Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
                  dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
-                 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow);
-                 F_calc = [Fnow;0;0];
+                 dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                 c_fw = params.model.geom.bw_fw.l*sin(x(3)); % - params.model.geom.wheel.r;
              
         end
         
@@ -347,6 +447,8 @@ switch params.sim.trick
                  value = x_fw_ramp; % use the value corresponding to the front wheel constraint
                  isterminal = 1; % tell ode45 to terminate if the event has occured
                  direction = 1; % tell ode45 to look for a positive constraint force as the event
+                 disp("Robot events x_fw")
+                 disp(x_fw_ramp)
 
              case ['fw_ramp']
                  
@@ -356,7 +458,7 @@ switch params.sim.trick
 
              case ['bw_ramp']
                  
-                 disp(fw_ang_compare);
+                 %disp(fw_ang_compare);
                  
                  value = fw_ang_compare;
                  isterminal = 1;
@@ -366,11 +468,16 @@ switch params.sim.trick
                  value = bw_ang_compare;
                  isterminal = 1;
                  direction = 0;
-
+                 
              case ['bw_airborne']
-                 value = 1;
-                 isterminal = 1;
-                 direction = 0;
+                 value = [c_bw,c_fw];
+                 isterminal = [1,1];
+                 direction = [-1,-1];
+                 
+             case ['fw_off']
+                  value = c_fw;
+                  isterminal = 1;
+                  direction = -1;
          end
          
     case 'Wheelie'
@@ -383,12 +490,9 @@ switch params.sim.trick
                  direction = 1; % tell ode45 to look for a positive constraint force as the event
           
           case ['fw_off']
-              % Do not try and terminate once the wheel is off the ground.
-              % Eventually will add in the collision detection here get back to
-              % the ground.
-                value = 1;
-                isterminal = 0;
-                direction = 0;
+                value = c_fw;
+                isterminal = 1;
+                direction = -1;
       end
  end
  

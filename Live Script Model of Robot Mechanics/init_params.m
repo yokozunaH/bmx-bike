@@ -22,7 +22,9 @@ function params = init_params
      params.model.dyn.com.I = 0.1225; % moment of inertia of com
 
      params.model.dyn.g = 9.81;      % acceleration due to gravity
-     params.model.dyn.tau_bw = -1;    % applied torque from the backwheel
+     params.model.dyn.tau_bw = -2.5;    % applied torque from the backwheel
+     params.model.dyn.wheel_res = 0.1;
+     params.model.dyn.collision_threshold = 0.02;
      
     % parameters that help with visualizing the robot:
     params.model.geom.body.w = 0.3; % width of the bike body
@@ -80,5 +82,5 @@ function params = init_params
     params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
     
     %Change simulation to wheelie or backflip trick
-    params.sim.trick = 'Backflip';
+    params.sim.trick = 'Wheelie';
 end
