@@ -36,7 +36,7 @@ tsim = [];
 xsim = [];
 theta_d = pi/2; 
 kd =  6; 
-
+E = []; 
 % Set integration options - mainly events
 options = odeset('Events',@robot_events);
 
@@ -52,24 +52,33 @@ while params.sim.tfinal - t_curr > params.sim.dt
     
     t_curr = tsim(end); % set the current time to where the integration stopped
     x_IC = xsim(end,:); % set the initial condition to where the integration stopped
-      
+ 
 end
 
 % transpose xsim_passive so that it is 5xN (N = number of timesteps):
- 
+
+for i = 1:size(xsim,1)
+    tempE = energy(xsim(i,:),params);
+    E = [E; tempE];
+end
+
  figure;
  
  xplot = xsim';
-  
+ 
+ 
  % plot theta_bike and theta_mw of the robot
- subplot(2,1,1), plot(tsim,xplot(1,:),'b-')%,...
-                      %tsim,xplot(2,:),'r-','LineWidth',2);
+ subplot(3,1,1), plot(tsim,xplot(1,:),'b-',...
+                      tsim,xplot(2,:),'r-','LineWidth',2);
                  legend('theta_bike','theta_mw');
                   
  % plot the angular velocity of the bike and MW of the robot
- subplot(2,1,2), plot(tsim,xplot(3,:),'b:')%,...
-                      %tsim,xplot(4,:),'r:','LineWidth',2);
+ subplot(3,1,2), plot(tsim,xplot(3,:),'b:',...
+                      tsim,xplot(4,:),'r:','LineWidth',2);
                   legend('dtheta_bike','dtheta_mw');
+                 
+ subplot(3,1,3),plot(tsim, E)
+                   legend('energy');
 
  pause(1); % helps prevent animation from showing up on the wrong figure
  

@@ -23,7 +23,7 @@ function params = init_params
      params.model.dyn.mw.offset = 0; % offset between CoM and MW
 
      params.model.dyn.g = 9.81;      % acceleration due to gravity
-     params.model.dyn.tau_mw = 0;    % applied torque from the backwheel
+     params.model.dyn.tau_mw = -1;    % applied torque from the backwheel
      
     % parameters that help with visualizing the bike and MW:
     params.model.geom.body.h = 0.3; % height of the bike body
