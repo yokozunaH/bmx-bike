@@ -131,12 +131,47 @@ while params.sim.tfinal - t_curr > params.sim.dt
                                     % smoothly changing variable.  Therefore, we need to check the
                                     % constraint forces and turn them off if they act in the wrong
                                     % direction
-                                    if fw_h > 0 && fw_h < params.model.geom.wheel.r + 0.005; %params.model.dyn.collision_threshold
+                                    if fw_h > 0 && fw_h < params.model.geom.wheel.r + 0.005 %params.model.dyn.collision_threshold
                                         disp('Put frontwheel constraint on again')
+                                        params.sim.constraints = ['bw_off'];
+                                    end
+                                    
+                              elseif(fw_h < params.model.geom.wheel.r + params.model.dyn.collision_threshold && x_IC(2) < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
+                                     disp("two wheel Collision")
+                                     [A_unilateral,~] = constraint_derivatives(x_IC,params); 
+                                     A_col = A_unilateral([2,3],:); %add new constraint row to A matrix
+                                     restitution = [1 + params.model.dyn.wheel_res;
+                                         1 + params.model.dyn.wheel_res]; %restitiution being zero
+                                     Minv_col = inv_mass_matrix(x_IC,params);
+                                     x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
+                                    % Often in a collision, the constraint forces will be violated
+                                    % immediately, rendering event detection useless since it requires a
+                                    % smoothly changing variable.  Therefore, we need to check the
+                                    % constraint forces and turn them off if they act in the wrong
+                                    % direction
+                                    if fw_h > 0 && fw_h < params.model.geom.wheel.r + 0.005 && x_IC(2) > 0 && x_IC(2) < params.model.geom.wheel.r + 0.005 %params.model.dyn.collision_threshold
+                                        disp('Put flat_ground constraint on again')
                                         params.sim.constraints = ['flat_ground'];
                                     end
 
                              end
+                             
+                        case ['bw_off']
+                            disp("BW Collision")
+                             [A_unilateral,~] = constraint_derivatives(x_IC,params); 
+                             A_col = A_unilateral(2,:); %add new constraint row to A matrix
+                             restitution = 1 + params.model.dyn.wheel_res; %restitiution being zero
+                             Minv_col = inv_mass_matrix(x_IC,params);
+                             x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
+                            % Often in a collision, the constraint forces will be violated
+                            % immediately, rendering event detection useless since it requires a
+                            % smoothly changing variable.  Therefore, we need to check the
+                            % constraint forces and turn them off if they act in the wrong
+                            % direction
+                            if x_IC(2) > 0 && x_IC(2) < params.model.geom.wheel.r + 0.005%+params.model.dyn.collision_threshold
+                                disp('Put Backwheel constraint on again')
+                                params.sim.constraints = ['flat_ground'];
+                            end
                             
                     end
                     
@@ -203,7 +238,7 @@ t_anim = 0:params.viz.dt:tsim(end);
 % x_anim = interp1(tsim, xsim, t_anim); %x_anim doesn't run in airborne
 x_anim = xsim'; % transpose so that xsim is 5xN (N = number of timesteps)
  
- animate_robot(x_anim(1:5,:),params,'trace_cart_com',false,...
+animate_robot(x_anim(1:5,:),params,'trace_cart_com',false,...
      'trace_pend_com',false,'trace_pend_tip',false,'video',true);
  
  fprintf('Done passive simulation.\n');
@@ -393,6 +428,15 @@ switch params.sim.trick
                  dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
                  dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
                  c_fw = params.model.geom.bw_fw.l*sin(x(3));
+                 
+            case ['bw_off']
+                A = A_all([1,3],:);
+                Adotqdot = [q_dot'*Hessian(:,:,1)*q_dot; % robot position x-constraint
+                         q_dot'*Hessian(:,:,3)*q_dot]; % backwheel y-constraint
+                Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);
+                dx(1:nq) = (eye(nq) - A'*((A*A')\A))*x(6:10);
+                dx(nq+1:2*nq) = Minv*(Q - H - A'*Fnow) - A'*((A*A')\A)*q_dot/params.sim.dt;
+                c_bw = x(2) - params.model.geom.wheel.r;
 
         end
     
@@ -447,8 +491,8 @@ switch params.sim.trick
                  value = x_fw_ramp; % use the value corresponding to the front wheel constraint
                  isterminal = 1; % tell ode45 to terminate if the event has occured
                  direction = 1; % tell ode45 to look for a positive constraint force as the event
-                 disp("Robot events x_fw")
-                 disp(x_fw_ramp)
+                 %disp("Robot events x_fw")
+                 %disp(x_fw_ramp)
 
              case ['fw_ramp']
                  
@@ -476,6 +520,11 @@ switch params.sim.trick
                  
              case ['fw_off']
                   value = c_fw;
+                  isterminal = 1;
+                  direction = -1;
+                  
+             case ['bw_off']
+                  value = c_bw;
                   isterminal = 1;
                   direction = -1;
          end
