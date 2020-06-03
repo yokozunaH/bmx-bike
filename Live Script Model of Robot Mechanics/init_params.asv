@@ -79,9 +79,9 @@ function params = init_params
     params.sim.tfinal = 10;          % Length of the simulation
     params.sim.dt = 0.02;           % simulation timestep
     
-    % communicatoin and computation delay 
+    
+    % communicatoin an
     params.control.delay = 0.5*params.sim.dt; 
-    params.control.dt = 0.02; % controller time step 
     
     % variables related to the constraints
     params.sim.constraints.number = 6;  % total number of constraint equations
@@ -90,5 +90,5 @@ function params = init_params
     params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
     
     %Change simulation to wheelie or backflip trick
-    params.sim.trick = 'Wheelie'; %'Backflip';
+    params.sim.trick = 'Backflip'; %'Wheelie';
 end

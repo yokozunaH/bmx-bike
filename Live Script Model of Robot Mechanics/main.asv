@@ -225,9 +225,7 @@ while twrite < params.sim.tfinal
 
                          case ['flat_ground'] % both wheels are on the ground
                              disp("Changed Constraint!")
-                             if theta_COM > 0
-                                params.sim.constraints = ['fw_off']; % the front wheel is now off the ground    
-                             end
+                             params.sim.constraints = ['fw_off']; % the front wheel is now off the ground    end
                          case ['fw_off'] % both wheels are on the ground
                             disp("Collision!")                           
                             [A_unilateral,~] = constraint_derivatives(x_IC,params); 
