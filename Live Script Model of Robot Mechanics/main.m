@@ -40,7 +40,7 @@ prevError = 0;
 prev_theta = 0;
 eint = 0;
 status = "NA";
-tol = 0.001; 
+
 
 % create a place for constraint forces populated in
 % robot_dynamic_constraints function
@@ -263,7 +263,6 @@ function [dx] = robot_dynamics_constraints(t,x)
 
         case 'Wheelie'
             % Wheelie %
-            %display(theta_COM)
             if (t<0.5)
                 tau = -0.5;
             end
@@ -273,19 +272,18 @@ function [dx] = robot_dynamics_constraints(t,x)
             end
 
             if (t>=0.7)
-                %display(theta_COM)
-                [tau_d,eint,prevError,status] = Controller(theta_COM,eint,prevError,tol);
+                [tau_d,eint,prevError,status] = Controller(theta_COM,eint,prevError);
                 tau = -Motor(tau_d,dtheta_bw); 
-                display(tau);
+                %display(tau);
             end
 
-            %display(tau)
             % Limit torque to feasible values
             if tau> 2.5
                 tau = 2.5;
             elseif tau<-2.5
                 tau = -2.5;
             end
+            
         case 'Backflip' 
 
             if t < 0.5
