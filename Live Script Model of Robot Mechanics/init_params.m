@@ -14,7 +14,7 @@
 function params = init_params
     % parameters that appear in the dynamics:
      params.model.dyn.com.m = 5;    % mass of the bike body
-     params.model.dyn.bw.m = 0.185;    % mass of bw
+      params.model.dyn.bw.m = 0.185;    % mass of bw
      params.model.dyn.fw.m = 0.185;    % mass of fw
 
      params.model.dyn.bw.I = 0.000380; % moment of inertia of bw

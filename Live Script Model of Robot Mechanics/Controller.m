@@ -14,9 +14,9 @@ end
 params = init_params;
 switch params.sim.trick
     case 'Backflip'
-        Kp = 80;
-        Ki = 5;
-        Kd = 50; %1;
+        Kp = 1;
+        Ki = 0.5;
+        Kd = 5; %1;
 
         set = -12.6; % speed calculated from winter quarter 
         error = set-state;
@@ -25,9 +25,9 @@ switch params.sim.trick
         e_prev = error;
     
     case 'Wheelie'
-        Kp = 150; %150; 
-        Ki = 1; %0.05; 
-        Kd = 80; %200; 
+        Kp = 10; %150; 
+        Ki = 0.5; %0.05; 
+        Kd = 0.9; %200; 
     
         set = pi/2 - params.model.geom.bw_com.theta; 
 

@@ -91,7 +91,7 @@ while twrite < params.sim.tfinal
 
 
     currtime = tseg(end);
-    display(currtime)
+    %display(currtime)
     % compute control 
     switch params.sim.trick
 
