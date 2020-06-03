@@ -62,7 +62,8 @@ function params = init_params
     params.viz.tracking = 1; %Turn on or off tracking of bike
     params.viz.x_axis_window = [-1,4]; %these are the limits size based on the back wheel x-position
     params.viz.y_axis_window = [-0.1,4]; %y-axis remains constant 
-    params.viz.dt = 0.05;
+    params.viz.dt = 0.075;
+    
 
     % parameters related to simulating (integrating) the dynamics forward
     % in time:
@@ -76,7 +77,7 @@ function params = init_params
     params.sim.ICs.dtheta_com = 0;
     params.sim.ICs.dtheta_fw = 0;
     params.sim.ICs.dtheta_bw = 0;
-    params.sim.tfinal = 5;          % Length of the simulation
+    params.sim.tfinal = 6;          % Length of the simulation
     params.sim.dt = 0.05;           % simulation timestep
     
     % variables related to the constraints

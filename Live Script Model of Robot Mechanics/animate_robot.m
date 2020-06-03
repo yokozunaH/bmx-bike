@@ -58,6 +58,8 @@ end
     
     if p.Results.video
         v = VideoWriter('bikeanim.avi');
+        v.Quality = 100;
+        v.FrameRate = 1/params.viz.dt;
         open(v);
     end
     

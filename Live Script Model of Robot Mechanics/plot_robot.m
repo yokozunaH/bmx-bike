@@ -180,6 +180,18 @@ if p.Results.new_fig
 end
 
 fill(body.curr.corners(1,:),body.curr.corners(2,:),params.viz.colors.body);
+
+s = strcat("bike_imgs/bike_",num2str(mod(round((180/pi)*theta_com),360)),".png");
+
+%load the image
+[img, map, alphachannel] = imread(s);
+
+img_x = [-0.2 + T_body(1,3),0.35 + T_body(1,3)];
+img_y = [0.4 + T_body(2,3),-0.25 + T_body(2,3)];
+image(img_x,img_y,img,'AlphaData', alphachannel);
+
+set(gca,'YDir','normal')
+
 hold on;
 % fill(leg_bw.corners(1,:),leg_bw.corners(2,:),params.viz.colors.leg);
 % fill(leg_fw.corners(1,:),leg_fw.corners(2,:),params.viz.colors.leg);
