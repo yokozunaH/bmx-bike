@@ -45,7 +45,7 @@ tau = 0; %initial torque command
 
 % create a place for constraint forces populated in
 % robot_dynamic_constraints function
-F_calc = [0;0;0;0];
+F_calc = [0;0;-100;0];
 tsim = [];
 xsim = [];
 xfin = [];
@@ -224,27 +224,32 @@ while twrite < params.sim.tfinal
                     switch params.sim.constraints
 
                          case ['flat_ground'] % both wheels are on the ground
-                             disp("Changed Constraint!")
-                             if theta_COM > 0
+                             if F_calc(3) > 0
+                                disp("Changed Constraint!")
                                 params.sim.constraints = ['fw_off']; % the front wheel is now off the ground    
                              end
                          case ['fw_off'] % both wheels are on the ground
-                            disp("Collision!")                           
-                            [A_unilateral,~] = constraint_derivatives(x_IC,params); 
-                            A_col = A_unilateral(3,:); %add new constraint row to A matrix
-                            restitution = 1 + params.model.dyn.wheel_res; %restitiution being zero
-                            Minv_col = inv_mass_matrix(x_IC,params);
-                            % compute the change in velocity due to collision impulses
-                            x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
-                            % Often in a collision, the constraint forces will be violated
-                            % immediately, rendering event detection useless since it requires a
-                            % smoothly changing variable.  Therefore, we need to check the
-                            % constraint forces and turn them off if they act in the wrong
-                            % direction
-                             if x_IC(3) > 0 && x_IC(3) < params.model.dyn.collision_threshold
-                                 disp('Put frontwheel constraint on again')
-                                 params.sim.constraints = ['flat_ground'];
+                             if c_fw < 0
+                                 
+                                disp("Collision!")                           
+                                [A_unilateral,~] = constraint_derivatives(x_IC,params); 
+                                A_col = A_unilateral(3,:); %add new constraint row to A matrix
+                                restitution = 1 + params.model.dyn.wheel_res; %restitiution being zero
+                                Minv_col = inv_mass_matrix(x_IC,params);
+                                % compute the change in velocity due to collision impulses
+                                x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
+                                % Often in a collision, the constraint forces will be violated
+                                % immediately, rendering event detection useless since it requires a
+                                % smoothly changing variable.  Therefore, we need to check the
+                                % constraint forces and turn them off if they act in the wrong
+                                % direction
+                                 if x_IC(3) > 0 && x_IC(3) < params.model.dyn.collision_threshold
+                                     disp('Put frontwheel constraint on again')
+                                     params.sim.constraints = ['flat_ground'];
+                                 end
+                             
                              end
+                             
                     end
                           
                 end
@@ -281,14 +286,18 @@ end
 % (https://www.mathworks.com/matlabcentral/answers/321603-how-do-i-interpolate-1d-data-if-i-do-not-have-unique-values
 tsim = cumsum(ones(size(tsim)))*eps + tsim;
 
+anim_table = table(tsim,xsim);
+[~,ia] = unique(anim_table.tsim);
+anim_table_unique = anim_table(ia,:);
+
 % 2) resample the duplicate-free time vector:
 t_anim = 0:params.viz.dt:tsim(end);
 
 % 3) resample the state-vs-time array:
-%x_anim = interp1(tsim, xsim, t_anim); %x_anim doesn't run in airborne
-x_anim = xsim'; % transpose so that xsim is 5xN (N = number of timesteps)
+x_anim = interp1(anim_table_unique.tsim, anim_table_unique.xsim, t_anim); %x_anim doesn't run in airborne
+x_anim = x_anim'; % transpose so that xsim is 5xN (N = number of timesteps)
  
- animate_robot(x_anim(1:5,:),params,'trace_cart_com',false,...
+ animate_robot(x_anim(1:5,2:101),params,'trace_cart_com',false,...
      'trace_pend_com',false,'trace_pend_tip',false,'video',true);
  
  fprintf('Done passive simulation.\n');
@@ -551,7 +560,7 @@ switch params.sim.trick
                  direction = 1; % tell ode45 to look for a positive constraint force as the event
           
           case ['fw_off']
-                value = c_fw;
+                value = 0; %c_fw
                 isterminal = 1;
                 direction = -1;
       end

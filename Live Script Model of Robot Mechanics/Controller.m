@@ -2,7 +2,7 @@ function [tau_d,e_total,e_prev,status] = Controller(state,eint,prevError)
 
 
 status = "NA"; 
-
+%{
 eintmax = 3000;
 
 if (eint>eintmax)
@@ -10,7 +10,7 @@ if (eint>eintmax)
 elseif (eint<-eintmax)
     eint = -eintmax;
 end
-
+%}
 params = init_params;
 switch params.sim.trick
     case 'Backflip'
