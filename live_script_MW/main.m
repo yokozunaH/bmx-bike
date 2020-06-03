@@ -34,7 +34,9 @@ t_curr = 0;
 F_calc = [];
 tsim = [];
 xsim = [];
-
+theta_d = pi/2; 
+kd =  6; 
+E = []; 
 % Set integration options - mainly events
 options = odeset('Events',@robot_events);
 
@@ -50,24 +52,33 @@ while params.sim.tfinal - t_curr > params.sim.dt
     
     t_curr = tsim(end); % set the current time to where the integration stopped
     x_IC = xsim(end,:); % set the initial condition to where the integration stopped
-      
+ 
 end
 
 % transpose xsim_passive so that it is 5xN (N = number of timesteps):
- 
+
+for i = 1:size(xsim,1)
+    tempE = energy(xsim(i,:),params);
+    E = [E; tempE];
+end
+
  figure;
  
  xplot = xsim';
-  
+ 
+ 
  % plot theta_bike and theta_mw of the robot
- subplot(2,1,1), plot(tsim,xplot(1,:),'b-',...
+ subplot(3,1,1), plot(tsim,xplot(1,:),'b-',...
                       tsim,xplot(2,:),'r-','LineWidth',2);
                  legend('theta_bike','theta_mw');
                   
  % plot the angular velocity of the bike and MW of the robot
- subplot(2,1,2), plot(tsim,xplot(3,:),'b:',...
+ subplot(3,1,2), plot(tsim,xplot(3,:),'b:',...
                       tsim,xplot(4,:),'r:','LineWidth',2);
                   legend('dtheta_bike','dtheta_mw');
+                 
+ subplot(3,1,3),plot(tsim, E)
+                   legend('energy');
 
  pause(1); % helps prevent animation from showing up on the wrong figure
  
@@ -113,14 +124,14 @@ dx = zeros(numel(x),1);
 nq = numel(x)/2;    % assume that x = [q;q_dot];
 q_dot = x(nq+1:2*nq);
 
-% tau = params.model.dyn.tau_mw * 0.05;
 tau = params.model.dyn.tau_mw;
+% tau = kd*params.model.dyn.tau_mw*(theta_d-x(1));
 
-if t > 1
-    tau = params.model.dyn.tau_mw;
-end
+% if t > 1 
+%     tau = params.model.dyn.tau_mw;
+% end
 
-Q = [tau;tau];
+Q = [0;tau];
 
 % find the parts that don't depend on constraint forces
 H = H_eom(x,params);
@@ -129,7 +140,7 @@ Minv = inv_mass_matrix(x,params);
 
 switch params.sim.constraints
     case 'balancing'
-        disp("Changed Constraint!");
+%         disp("Changed Constraint!");
         %A = A_all(1,:);
         %Adotqdot = q_dot'*Hessian(:,:,1)*q_dot;  % robot position x-constraint
         %Fnow = (A*Minv*A')\(A*Minv*(Q - H) + Adotqdot);

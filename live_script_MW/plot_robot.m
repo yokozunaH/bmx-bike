@@ -58,13 +58,29 @@ mw_r = params.model.geom.mw.r;
 x_mw = (l_com+offset)*(cos(theta_bike));
 y_mw = (l_com+offset)*(sin(theta_bike));
 
-g_wbike = [[cos(theta_bike),-sin(theta_bike), 0];  %base-frame is the world frame
-          [sin(theta_bike),cos(theta_bike), 0];
-          [0, 0, 1]];
+x_com = l_com*(cos(theta_bike));
+y_com = l_com*(sin(theta_bike));
 
-g_bike_mw = [[cos(theta_mw),-sin(theta_mw),x_mw];
-             [sin(theta_mw),cos(theta_mw),y_mw];
-             [0,0,1]];   
+% g_wbike = [[cos(theta_bike),-sin(theta_bike), 0];  %base-frame is the world frame
+%           [sin(theta_bike),cos(theta_bike), 0];
+%           [0, 0, 1]];
+
+% g_bike_mw = [[cos(theta_mw),-sin(theta_mw),x_mw];
+%              [sin(theta_mw),cos(theta_mw),y_mw];
+%              [0,0,1]];   
+%    
+
+% g_mw_tran = [[1,0, x_com];  %base-frame is the world frame
+%               [0,1, y_com];
+%               [0, 0, 1]]
+%           
+% g_bike_mw = [[cos(theta_bike),-sin(theta_bike),0];
+%              [sin(theta_bike),cos(theta_bike),0];
+%              [0,0,1]];   
+         
+g_mw = [[cos(theta_mw+theta_bike),-sin(theta_mw+theta_bike),x_com];
+            [sin(theta_mw+theta_bike),cos(theta_mw+theta_bike),y_com];
+                [0,0,1]]; 
 
 % g_bike_mw_trans = [[1, 0, x_mw]; 
 %             [0, 1, y_mw];
@@ -72,7 +88,7 @@ g_bike_mw = [[cos(theta_mw),-sin(theta_mw),x_mw];
 
 % g_bike_mw = g_bike_mw_rot*g_bike_mw_trans;
          
-g_wmw = g_bike_mw;
+g_wmw = g_mw;
 
 % body.home.mw.spook.x = mw_r*cos(theta_mw); %x origin of the spook in the MW frame
 % body.home.mw.spook.y = mw_r*sin(theta_mw); %y origin of the spook in the MW frame
