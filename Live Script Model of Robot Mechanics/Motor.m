@@ -16,7 +16,7 @@ Ke = 1/2100;
 Kv = 2100;
 Kt = (3/2)*(60/(2*pi))*(1/Kv);
 
-backEMF = 0; %Ke*speed;
+backEMF = Ke*speed;
 
 tau = Kt*(V-backEMF)/R;
 
