@@ -82,6 +82,13 @@ theta_fw = q(5);
 g_wbf = [[cos(0), -sin(0), x_bf]; 
           [sin(0), cos(0), y_bf];
           [0, 0, 1]];
+      
+g_wbf_img_bot = [[cos(0), -sin(0), x_bf-0.2]; %-0.2
+                [sin(0), cos(0), y_bf+0.4]; %0.4
+                 [0, 0, 1]];
+g_wbf_img_upp = [[cos(0), -sin(0), x_bf+0.35]; % 0.35
+                [sin(0), cos(0), y_bf-0.25]; %-0.25
+                 [0, 0, 1]];
 
 g_rot = [[cos(bw_com_init_angle + theta_com), -sin(bw_com_init_angle + theta_com), 0]; 
          [sin(bw_com_init_angle + theta_com), cos(bw_com_init_angle + theta_com), 0];
@@ -179,17 +186,31 @@ if p.Results.new_fig
     figure;
 end
 
-fill(body.curr.corners(1,:),body.curr.corners(2,:),params.viz.colors.body);
 
-s = strcat("bike_imgs/bike_",num2str(mod(round((180/pi)*theta_com),360)),".png");
+
+%hgtransform
+theta = -mod(round((180/pi)*theta_com),360);
+tform = affine2d([ ...
+    cosd(theta) sind(theta) 0;...
+    -sind(theta) cosd(theta) 0; ...
+    0 0 1]);
+%s = strcat("bike_imgs/bike_",num2str(mod(round((180/pi)*theta_com),360)),".png");
 
 %load the image
-[img, map, alphachannel] = imread(s);
+%[img, map, alphachannel] = imread(s);
+[img, map, alphachannel] = imread("bike_imgs/bike_0.png");
+%rotate the image
+img =  imwarp(img,tform);
+alphachannel = ~all(img == 0, 3);
+%Move the image into position
+T_img_bot = g_wbf_img_bot*g_bf_com*g_rot_rev;
+T_img_upp = g_wbf_img_upp*g_bf_com*g_rot_rev;
+img_x = [T_img_bot(1,3),T_img_upp(1,3)];
+img_y = [T_img_bot(2,3), T_img_upp(2,3)];
 
-img_x = [-0.2 + T_body(1,3),0.35 + T_body(1,3)];
-img_y = [0.4 + T_body(2,3),-0.25 + T_body(2,3)];
+%Create image
 image(img_x,img_y,img,'AlphaData', alphachannel);
-
+%Flip image so it's not upside down
 set(gca,'YDir','normal')
 
 hold on;
