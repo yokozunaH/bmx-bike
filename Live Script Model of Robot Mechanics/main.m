@@ -130,7 +130,8 @@ while twrite < params.sim.tfinal
             
             %tau = params.model.dyn.tau_bw * 0.05;
     end
-
+    
+    display(tau); 
     
     % update twrite and x_IC for next iteration 
     twrite = tseg(end); % set the current time to where the integration stopped

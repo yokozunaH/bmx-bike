@@ -25,9 +25,9 @@ switch params.sim.trick
         e_prev = error;
     
     case 'Wheelie'
-        Kp = 150; 
-        Ki = 0.05; 
-        Kd = 200; 
+        Kp = 150; %150; 
+        Ki = 1; %0.05; 
+        Kd = 80; %200; 
     
         set = pi/2 - params.model.geom.bw_com.theta; 
 
