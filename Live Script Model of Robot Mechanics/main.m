@@ -288,20 +288,27 @@ end
  lgd1.FontSize = 10;
  xlabel('time')
  ylabel('position') 
+ set(gca,'FontSize',11)
+ title('X and Y Position of Back Wheel vs Time','FontSize',12)
  
  % plot the angle of the COM and the back wheel
  %subplot(2,1,2), plot(tsim,xplot(3,:),'b:',...
  %                     tsim,xplot(4,:),'r:','LineWidth',2);
  subplot(3,1,2), plot(tsim,xplot(3,:),'r:','LineWidth',2);
- lgd2 = legend({'angle COM','angle back wheel'},'Location','southwest');
- lgd2.FontSize = 10; 
+ %lgd2 = legend({'angle COM','angle back wheel'},'Location','southwest');
+ %lgd2.FontSize = 10; 
  xlabel('time')
  ylabel('angle')
+ set(gca,'FontSize',11)
+ title('Center of Mass Angle vs Time','FontSize',12)
  
  % plot commanded tau values 
   subplot(3,1,3), plot(tsim,alltau,'r:','LineWidth',2);
  xlabel('time')
  ylabel('torque')
+ set(gca,'FontSize',11)
+ title('Commanded Torque to Back Wheel vs Time','FontSize',12)
+ 
  pause(1); % helps prevent animation from showing up on the wrong figure
  
 % Let's resample the simulator output so we can animate with evenly-spaced
