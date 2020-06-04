@@ -62,8 +62,7 @@ function params = init_params
     params.viz.tracking = 1; %Turn on or off tracking of bike
     params.viz.x_axis_window = [-1,4]; %these are the limits size based on the back wheel x-position
     params.viz.y_axis_window = [-0.1,4]; %y-axis remains constant 
-    params.viz.dt = 0.075;
-    
+    params.viz.dt = 0.05;
 
     % parameters related to simulating (integrating) the dynamics forward
     % in time:
@@ -77,9 +76,8 @@ function params = init_params
     params.sim.ICs.dtheta_com = 0;
     params.sim.ICs.dtheta_fw = 0;
     params.sim.ICs.dtheta_bw = 0;
-    params.sim.tfinal = 6;          % Length of the simulation
-    params.sim.dt = 0.05;           % simulation timestep
-
+    params.sim.tfinal = 10;          % Length of the simulation
+    params.sim.dt = 0.02;           % simulation timestep
     
     % communicatoin and computation delay 
     params.control.delay = 0.5*params.sim.dt; 
@@ -92,5 +90,5 @@ function params = init_params
     params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
     
     %Change simulation to wheelie or backflip trick
-    params.sim.trick = 'Wheelie'; %'Backflip';
+    params.sim.trick = ''; %'Backflip';
 end
