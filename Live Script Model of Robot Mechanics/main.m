@@ -64,7 +64,8 @@ options = odeset('Events',@robot_events, 'RelTol',1e-3);
 twrite = 0; 
 dt = params.control.dt;
 
-while twrite < params.sim.tfinal
+%% Discretized controller structure
+while twrite < params.sim.tfinal 
     
     % time between this write and next write 
     tspan = [twrite, twrite+ dt]; 
@@ -113,8 +114,8 @@ while twrite < params.sim.tfinal
  
             
         case 'Backflip' 
-            %[tau_d,eint,prevError,status] = Controller(dtheta_bw,eint,prevError,status);
-            %tau = -Motor(tau_d,dtheta_bw); 
+%             [tau_d,eint,prevError,status] = Controller(dtheta_bw,eint,prevError,status);
+%             tau = -Motor(tau_d,dtheta_bw); 
             tau = -2.5;
             %{
             if theta_COM > 0
@@ -159,44 +160,111 @@ while twrite < params.sim.tfinal
         
         switch params.sim.trick
             
-            case 'Backflip'
+            case 'Backflip' %Backflip control will be only enable before frontwheel hits the ramp
                 
-                if  twrite < params.sim.tfinal %&& x_IC(1)>2.7 %FIXME this second condition should be necessary!
-                    %but backflip constraints only work when this is true
-                    %(x(1) jumps drastically while being integrated) find a
-                    %way to correct this or add a better condition
+                if  twrite < params.sim.tfinal 
                 
                     switch params.sim.constraints
 
                         case ['flat_ground'] %both wheels are on the ground
-                            if x_IC(1)+params.model.geom.bw_fw.l > x_fw_ramp
-                                disp("FW is on the ramp!")
+                            if x_IC(1)+params.model.geom.bw_fw.l > params.model.geom.ramp.center.x
+                                disp("FW is on the ramp, shut off control!")
                                 disp(tseg(end))
                                 %disp(x_IC(1) + params.model.geom.bw_fw.l)
                                 params.sim.constraints = ['fw_ramp'];
+                                t_curr = twrite; 
+                                break %Go to simulation without control
                             end
+                    end
+                    
+                end
+                
+            case 'Wheelie'
+                
+                if  twrite < params.sim.tfinal
+                
+                    switch params.sim.constraints
+
+                         case ['flat_ground'] % both wheels are on the ground
+                             if F_calc(3) > 0
+                                disp("Changed Constraint!")
+                                params.sim.constraints = ['fw_off']; % the front wheel is now off the ground    
+                             end
+                         case ['fw_off'] % both wheels are on the ground
+                             if c_fw < 0
+                                 
+                                disp("Collision!")                           
+                                [A_unilateral,~] = constraint_derivatives(x_IC,params); 
+                                A_col = A_unilateral(3,:); %add new constraint row to A matrix
+                                restitution = 1 + params.model.dyn.wheel_res; %restitiution being zero
+                                Minv_col = inv_mass_matrix(x_IC,params);
+                                % compute the change in velocity due to collision impulses
+                                x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
+                                % Often in a collision, the constraint forces will be violated
+                                % immediately, rendering event detection useless since it requires a
+                                % smoothly changing variable.  Therefore, we need to check the
+                                % constraint forces and turn them off if they act in the wrong
+                                % direction
+                                 if x_IC(3) > 0 && x_IC(3) < params.model.dyn.collision_threshold
+                                     disp('Put frontwheel constraint on again')
+                                     params.sim.constraints = ['flat_ground'];
+                                 end
+                             
+                             end
+                             
+                    end
+                          
+                end
+        end         
+end
+
+
+%% Simulation without controller structure for backflip
+while params.sim.tfinal - t_curr > params.sim.dt
+        
+    tspan_passive = t_curr:params.sim.dt:params.sim.tfinal;
+    tau = 0; %turn off torque for ramp
+    
+    [tseg, xseg, ~, ~, ie] = ode15s(@(t,x) robot_dynamics_constraints(t,x,tau), tspan_passive, x_IC', options);
+    
+    
+
+    % extract info from the integration
+    tsim = [tsim;tseg]; % build up the time vector after each event
+    xsim = [xsim;xseg]; % build up the calculated state after each event
+    
+    xfin = xseg(end,:);
+    
+    t_curr = tsim(end); % set the current time to where the integration stopped
+    x_IC = xsim(end,:); % set the initial condition to where the integration stopped
+    
+    x_fw = x_IC(1) + params.model.geom.bw_fw.l;
+    % if the simulation ended early, specify the new set of constraints
+        
+        switch params.sim.trick
+            
+            case 'Backflip'
+                
+                if  params.sim.tfinal - tseg(end) > params.sim.dt 
+                
+                    switch params.sim.constraints
+                        
                         case ['fw_ramp']     %only the front wheel is on the ramp
-                            if x_IC(1) > x_bw_ramp
-                                disp("BW is on the ramp!")
-                                disp(tseg(end))
-                                params.sim.constraints = ['bw_ramp'];
-                            end
+                            disp("BW is on the ramp!")
+                            disp(tseg(end))
+                            params.sim.constraints = ['bw_ramp'];
                         case ['bw_ramp']     %both wheels are on the ramp
-                            if x_IC(2)+params.model.geom.bw_fw.l > fw_ang_compare
-                                disp("FW has left the ramp")
-                                disp(tseg(end))
-                                params.sim.constraints = ['fw_airborne'];
-                            end
+                            disp("FW has left the ramp")
+                            disp(tseg(end))
+                            params.sim.constraints = ['fw_airborne'];
                         case ['fw_airborne']     %frontwheels leaves the ramp
-                            if x_IC(2) > bw_ang_compare
-                                disp("BW has left the ramp")
-                                disp(tseg(end))
-                                params.sim.constraints = ['bw_airborne'];
-                            end
+                            disp("BW has left the ramp")
+                            disp(tseg(end))
+                            params.sim.constraints = ['bw_airborne'];
                             
                         case ['bw_airborne']
                              fw_h = x_IC(2) + params.model.geom.bw_fw.l*sin(x_IC(3));
-                             if c_bw < 0 %(x_IC(2) < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
+                             if(x_IC(2) < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
                                  disp("BW Collision")
                                  [A_unilateral,~] = constraint_derivatives(x_IC,params); 
                                  A_col = A_unilateral(2,:); %add new constraint row to A matrix
@@ -213,7 +281,7 @@ while twrite < params.sim.tfinal
                                     params.sim.constraints = ['fw_off'];
                                 end
 
-                             elseif c_fw < 0 %(fw_h < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
+                             elseif(fw_h < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
                                      disp("FW Collision")
                                      [A_unilateral,~] = constraint_derivatives(x_IC,params); 
                                      A_col = A_unilateral(3,:); %add new constraint row to A matrix
@@ -271,46 +339,10 @@ while twrite < params.sim.tfinal
                     
                 end
                 
-            case 'Wheelie'
-                
-                if  twrite < params.sim.tfinal
-                
-                    switch params.sim.constraints
-
-                         case ['flat_ground'] % both wheels are on the ground
-                             if F_calc(3) > 0
-                                disp("Changed Constraint!")
-                                params.sim.constraints = ['fw_off']; % the front wheel is now off the ground    
-                             end
-                         case ['fw_off'] % both wheels are on the ground
-                             if c_fw < 0
-                                 
-                                disp("Collision!")                           
-                                [A_unilateral,~] = constraint_derivatives(x_IC,params); 
-                                A_col = A_unilateral(3,:); %add new constraint row to A matrix
-                                restitution = 1 + params.model.dyn.wheel_res; %restitiution being zero
-                                Minv_col = inv_mass_matrix(x_IC,params);
-                                % compute the change in velocity due to collision impulses
-                                x_IC(6:10) = x_IC(6:10) - (Minv_col*A_col'*inv(A_col*Minv_col*A_col')*diag(restitution)*A_col*x_IC(6:10)')';
-                                % Often in a collision, the constraint forces will be violated
-                                % immediately, rendering event detection useless since it requires a
-                                % smoothly changing variable.  Therefore, we need to check the
-                                % constraint forces and turn them off if they act in the wrong
-                                % direction
-                                 if x_IC(3) > 0 && x_IC(3) < params.model.dyn.collision_threshold
-                                     disp('Put frontwheel constraint on again')
-                                     params.sim.constraints = ['flat_ground'];
-                                 end
-                             
-                             end
-                             
-                    end
-                          
-                end
         end         
 end
 
-% transpose xsim_passive so that it is 5xN (N = number of timesteps):
+
  %% plotting and animation 
  figure;
  
@@ -337,8 +369,9 @@ end
  set(gca,'FontSize',11)
  title('Center of Mass Angle vs Time','FontSize',12)
  
- % plot commanded tau values 
-  subplot(3,1,3), plot(tsim,alltau,'r:','LineWidth',2);
+ % plot commanded tau values
+ alltau(numel(tsim)) = 0;
+ subplot(3,1,3), plot(tsim,alltau,'r:','LineWidth',2);
  xlabel('time')
  ylabel('torque')
  set(gca,'FontSize',11)
@@ -364,7 +397,7 @@ x_anim = interp1(anim_table_unique.tsim, anim_table_unique.xsim, t_anim); %x_ani
 x_anim = x_anim'; % transpose so that xsim is 5xN (N = number of timesteps)
  
 
-animate_robot(x_anim(1:5,2:101),params,'trace_cart_com',false,...
+animate_robot(x_anim(1:5,2:end),params,'trace_cart_com',false,...
      'trace_pend_com',false,'trace_pend_tip',false,'video',true);
  
  fprintf('Done passive simulation.\n');
@@ -590,7 +623,7 @@ switch params.sim.trick
          switch params.sim.constraints
 
              case ['flat_ground']
-                 value = x_fw_ramp; % use the value corresponding to the front wheel constraint
+                 value = 0;%x_fw_ramp; % use the value corresponding to the front wheel constraint
                  isterminal = 1; % tell ode45 to terminate if the event has occured
                  direction = 1; % tell ode45 to look for a positive constraint force as the event
                  %disp("Robot events x_fw")
