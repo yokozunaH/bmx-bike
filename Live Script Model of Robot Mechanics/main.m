@@ -284,7 +284,7 @@ end
  % plot the x and y position of the back wheel
  subplot(3,1,1), plot(tsim,xplot(1,:),'b-',...
                       tsim,xplot(2,:),'r-','LineWidth',2);
- lgd1 = legend({'x position back wheel','y position back wheel'},'Location','southwest');
+ lgd1 = legend({'x position back wheel','y position back wheel'},'Location','northwest');
  lgd1.FontSize = 10;
  xlabel('time')
  ylabel('position') 
