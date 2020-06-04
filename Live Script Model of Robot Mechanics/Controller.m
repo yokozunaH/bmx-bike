@@ -1,7 +1,4 @@
-function [tau_d,e_total,e_prev,status] = Controller(state,eint,prevError)
-
-
-status = "NA"; 
+function [tau_d,e_total,e_prev,status] = Controller(state,eint,prevError,status)
 
 eintmax = 3000;
 
@@ -18,11 +15,15 @@ switch params.sim.trick
         Ki = 0.5;
         Kd = 5; %1;
 
-        set = -12.6; % speed calculated from winter quarter 
+        set = 12.6; % speed calculated from winter quarter 
         error = set-state;
         tau_d = Kp * error + Ki * eint + Kd *(error-prevError)/params.sim.dt;
         e_total = eint+error;
         e_prev = error;
+        
+        if status ==  'On Ramp'
+            tau_d = 0; 
+        end
     
     case 'Wheelie'
         Kp = 10; %150; 

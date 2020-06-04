@@ -113,10 +113,9 @@ while twrite < params.sim.tfinal
  
             
         case 'Backflip' 
-            %[tau_d,eint,prevError,status] = Controller(dtheta_bw,eint,prevError,status);
-            %tau = -Motor(tau_d,dtheta_bw); 
-            tau = -2.5;
-            %{
+            [tau_d,eint,prevError,status] = Controller(dtheta_bw,eint,prevError,status);
+            tau = -Motor(tau_d,dtheta_bw); 
+            
             if theta_COM > 0
                 tau = 0; 
                 status = "On Ramp";
@@ -125,7 +124,6 @@ while twrite < params.sim.tfinal
             if abs(theta_COM)<0.0001
                 status = "On Ground";
             end
-            %}
 
             %tau = params.model.dyn.tau_bw * 0.05;
     end
@@ -164,34 +162,26 @@ while twrite < params.sim.tfinal
                     switch params.sim.constraints
 
                         case ['flat_ground'] %both wheels are on the ground
-                            if x_IC(1)+params.model.geom.bw_fw.l > x_fw_ramp
-                                disp("FW is on the ramp!")
-                                disp(tseg(end))
-                                %disp(x_IC(1) + params.model.geom.bw_fw.l)
-                                params.sim.constraints = ['fw_ramp'];
-                            end
+                            disp("FW is on the ramp!")
+                            disp(tseg(end))
+                            %disp(x_IC(1) + params.model.geom.bw_fw.l)
+                            params.sim.constraints = ['fw_ramp'];
                         case ['fw_ramp']     %only the front wheel is on the ramp
-                            if x_IC(1) > x_bw_ramp
-                                disp("BW is on the ramp!")
-                                disp(tseg(end))
-                                params.sim.constraints = ['bw_ramp'];
-                            end
+                            disp("BW is on the ramp!")
+                            disp(tseg(end))
+                            params.sim.constraints = ['bw_ramp'];
                         case ['bw_ramp']     %both wheels are on the ramp
-                            if x_IC(2)+params.model.geom.bw_fw.l > fw_ang_compare
-                                disp("FW has left the ramp")
-                                disp(tseg(end))
-                                params.sim.constraints = ['fw_airborne'];
-                            end
+                            disp("FW has left the ramp")
+                            disp(tseg(end))
+                            params.sim.constraints = ['fw_airborne'];
                         case ['fw_airborne']     %frontwheels leaves the ramp
-                            if x_IC(2) > bw_ang_compare
-                                disp("BW has left the ramp")
-                                disp(tseg(end))
-                                params.sim.constraints = ['bw_airborne'];
-                            end
+                            disp("BW has left the ramp")
+                            disp(tseg(end))
+                            params.sim.constraints = ['bw_airborne'];
                             
                         case ['bw_airborne']
                              fw_h = x_IC(2) + params.model.geom.bw_fw.l*sin(x_IC(3));
-                             if c_bw < 0 %(x_IC(2) < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
+                             if(x_IC(2) < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
                                  disp("BW Collision")
                                  [A_unilateral,~] = constraint_derivatives(x_IC,params); 
                                  A_col = A_unilateral(2,:); %add new constraint row to A matrix
@@ -208,7 +198,7 @@ while twrite < params.sim.tfinal
                                     params.sim.constraints = ['fw_off'];
                                 end
 
-                             elseif c_fw < 0 %(fw_h < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
+                             elseif(fw_h < params.model.geom.wheel.r + params.model.dyn.collision_threshold)
                                      disp("FW Collision")
                                      [A_unilateral,~] = constraint_derivatives(x_IC,params); 
                                      A_col = A_unilateral(3,:); %add new constraint row to A matrix

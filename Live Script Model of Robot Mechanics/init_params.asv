@@ -14,7 +14,7 @@
 function params = init_params
     % parameters that appear in the dynamics:
      params.model.dyn.com.m = 5;    % mass of the bike body
-     params.model.dyn.bw.m = 0.185;    % mass of bw
+      params.model.dyn.bw.m = 0.185;    % mass of bw
      params.model.dyn.fw.m = 0.185;    % mass of fw
 
      params.model.dyn.bw.I = 0.000380; % moment of inertia of bw
@@ -79,9 +79,9 @@ function params = init_params
     params.sim.tfinal = 10;          % Length of the simulation
     params.sim.dt = 0.02;           % simulation timestep
     
-    
-    % communicatoin an
+    % communicatoin and computation delay 
     params.control.delay = 0.5*params.sim.dt; 
+    params.control.dt = 0.02; % controller time step 
     
     % variables related to the constraints
     params.sim.constraints.number = 6;  % total number of constraint equations
@@ -90,5 +90,5 @@ function params = init_params
     params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
     
     %Change simulation to wheelie or backflip trick
-    params.sim.trick = 'Backflip'; %'Wheelie';
+    params.sim.trick = ''; %'Backflip';
 end
