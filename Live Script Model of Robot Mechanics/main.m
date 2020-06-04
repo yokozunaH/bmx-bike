@@ -41,7 +41,7 @@ prev_theta = 0;
 eint = 0;
 status = "NA";
 tau = 0; %initial torque command 
-
+alltau = []; 
 
 % create a place for constraint forces populated in
 % robot_dynamic_constraints function
@@ -142,12 +142,17 @@ while twrite < params.sim.tfinal
     twrite = tseg(end); % set the current time to where the integration stopped
     x_IC = xseg(end,:); % set the initial condition to where the integration stopped
     
+    counter = size(tseg,1);
+    
+    for i = 1:counter
+        alltau = [alltau;tau]; % build up vector of all tau commands
+    end
 
     % variables for plotting 
     % extract info from the integration
     tsim = [tsim;tseg]; % build up the time vector after each event
     xsim = [xsim;xseg]; % build up the calculated state after each event
-
+    
     
     x_fw = x_IC(1) + params.model.geom.bw_fw.l;
     % if the simulation ended early, specify the new set of constraints
@@ -277,7 +282,7 @@ end
  xplot = xsim';
   
  % plot the x and y position of the back wheel
- subplot(2,1,1), plot(tsim,xplot(1,:),'b-',...
+ subplot(3,1,1), plot(tsim,xplot(1,:),'b-',...
                       tsim,xplot(2,:),'r-','LineWidth',2);
  lgd1 = legend({'x position back wheel','y position back wheel'},'Location','southwest');
  lgd1.FontSize = 10;
@@ -287,11 +292,16 @@ end
  % plot the angle of the COM and the back wheel
  %subplot(2,1,2), plot(tsim,xplot(3,:),'b:',...
  %                     tsim,xplot(4,:),'r:','LineWidth',2);
- subplot(2,1,2), plot(tsim,xplot(3,:),'r:','LineWidth',2);
+ subplot(3,1,2), plot(tsim,xplot(3,:),'r:','LineWidth',2);
  lgd2 = legend({'angle COM','angle back wheel'},'Location','southwest');
  lgd2.FontSize = 10; 
  xlabel('time')
  ylabel('angle')
+ 
+ % plot commanded tau values 
+  subplot(3,1,3), plot(tsim,alltau,'r:','LineWidth',2);
+ xlabel('time')
+ ylabel('torque')
  pause(1); % helps prevent animation from showing up on the wrong figure
  
 % Let's resample the simulator output so we can animate with evenly-spaced
