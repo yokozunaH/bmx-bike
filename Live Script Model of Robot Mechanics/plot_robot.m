@@ -241,10 +241,10 @@ yline(0);
 
 
 %Background image
-I = imread('bike_imgs/tech-room-finder-header.jpg'); 
+I = imread('bike_imgs/pano.jpg'); %tech-room-finder-header.jpg'); 
 %set(gca,'YDir','reverse')
 I = imresize(I, 1); 
-h = image([-1 20],[6 -0.1],I); 
+h = image([-1 20],[4 -0.1],I); %change 4 to 6 for tech-room pic
 uistack(h,'bottom')
 
 
