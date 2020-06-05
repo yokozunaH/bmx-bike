@@ -77,7 +77,7 @@ function params = init_params
     params.sim.ICs.dtheta_com = 0;
     params.sim.ICs.dtheta_fw = 0;
     params.sim.ICs.dtheta_bw = 0;
-    params.sim.tfinal = 6;          % Length of the simulation
+    params.sim.tfinal = 10;          % Length of the simulation
     params.sim.dt = 0.05;           % simulation timestep
 
     
