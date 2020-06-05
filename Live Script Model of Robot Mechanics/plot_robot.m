@@ -186,8 +186,6 @@ if p.Results.new_fig
     figure;
 end
 
-
-
 %hgtransform
 theta = -mod(round((180/pi)*theta_com),360);
 tform = affine2d([ ...
@@ -240,6 +238,15 @@ end
  
 %Add ground line
 yline(0);
+
+
+%Background image
+I = imread('bike_imgs/tech-room-finder-header.jpg'); 
+%set(gca,'YDir','reverse')
+I = imresize(I, 1); 
+h = image([-1 20],[6 -0.1],I); 
+uistack(h,'bottom')
+
 
 hold off;
 if params.viz.tracking
