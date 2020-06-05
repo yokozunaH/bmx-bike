@@ -39,14 +39,14 @@ function params = init_params
 
     % parameters related to simulating (integrating) the dynamics forward
     % in time:
-    params.sim.ICs.theta_bike = pi/2-0.1;  % initial positions
+    params.sim.ICs.theta_bike = pi/2-5/180*pi;  % initial positions
     params.sim.ICs.theta_mw = 0;
     
     params.sim.ICs.dtheta_bike = 0;     % initial velocities
     params.sim.ICs.dtheta_mw = 0;
    
     params.sim.tfinal = 5;          % Length of the simulation
-    params.sim.dt = 0.05;           % simulation timestep
+    params.sim.dt = 0.001;           % simulation timestep
     
     % variables related to the constraints
     params.sim.constraints.number = 1;  % total number of constraint equations

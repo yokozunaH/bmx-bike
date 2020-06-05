@@ -22,7 +22,7 @@ function params = init_params
      params.model.dyn.com.I = 0.1225; % moment of inertia of com
 
      params.model.dyn.g = 9.81;      % acceleration due to gravity
-     params.model.dyn.tau_bw = -3;    % applied torque from the backwheel
+     params.model.dyn.tau_bw = 0;    % applied torque from the backwheel
      params.model.dyn.wheel_res = 0.1;
      params.model.dyn.collision_threshold = 0.02;
      
@@ -82,8 +82,8 @@ function params = init_params
 
     
     % communicatoin and computation delay 
-    params.control.delay = 0.5*params.sim.dt; 
     params.control.dt = 0.02; % controller time step 
+    params.control.delay = 0.5*params.control.dt; 
     
     % variables related to the constraints
     params.sim.constraints.number = 6;  % total number of constraint equations

@@ -27,7 +27,11 @@ x_IC = [params.sim.ICs.theta_bike;
         params.sim.ICs.dtheta_bike;
         params.sim.ICs.dtheta_mw];
 
-t_curr = 0;
+twrite = 0;
+dt = 1/50;
+delay = .001;
+tau = 0;
+memory = [0;0;0];
 
 % create a place for constraint forces populated in
 % robot_dynamic_constraints function
@@ -37,12 +41,13 @@ xsim = [];
 theta_d = pi/2; 
 kd =  6; 
 E = []; 
+
 % Set integration options - mainly events
 options = odeset('Events',@robot_events);
 
-while params.sim.tfinal - t_curr > params.sim.dt
+while params.sim.tfinal - twrite > params.sim.dt
         
-    tspan_passive = t_curr:params.sim.dt:params.sim.tfinal;
+    tspan_passive = [twrite,twrite+dt];
     
     [tseg, xseg, ~, ~, ~] = ode45(@robot_dynamics_constraints, tspan_passive, x_IC', options);
     
@@ -50,7 +55,14 @@ while params.sim.tfinal - t_curr > params.sim.dt
     tsim = [tsim;tseg]; % build up the time vector after each event
     xsim = [xsim;xseg]; % build up the calculated state after each event
     
-    t_curr = tsim(end); % set the current time to where the integration stopped
+    t_read = tseg(end)-delay;
+    x_read = interp1(tseg,xseg,t_read);
+    
+    [control,eint,prevEr] = MWController(x_read(1),memory(2,end),memory(3,end));
+    tau = -Motor(control,x_read(3));
+    memory = [memory [x_read(1);eint;prevEr]];     
+    
+    twrite = tsim(end); % set the current time to where the integration stopped
     x_IC = xsim(end,:); % set the initial condition to where the integration stopped
  
 end
@@ -88,15 +100,29 @@ end
 % (https://www.mathworks.com/matlabcentral/answers/321603-how-do-i-interpolate-1d-data-if-i-do-not-have-unique-values
 tsim = cumsum(ones(size(tsim)))*eps + tsim;
 
+% % 2) resample the duplicate-free time vector:
+% t_anim = 0:params.viz.dt:tsim(end);
+% 
+% % 3) resample the state-vs-time array:
+% % x_anim = interp1(tsim, xsim, t_anim); %x_anim doesn't run in airborne
+% x_anim = xsim'; % transpose so that xsim is 2xN (N = number of timesteps)
+%  
+% animate_robot(x_anim(1:2,:),params,'trace_cart_com',false,...
+% 'trace_pend_com',false,'trace_pend_tip',false,'video',true);
+
+anim_table = table(tsim,xsim);
+[~,ia] = unique(anim_table.tsim);
+anim_table_unique = anim_table(ia,:);
+
 % 2) resample the duplicate-free time vector:
 t_anim = 0:params.viz.dt:tsim(end);
 
 % 3) resample the state-vs-time array:
-% x_anim = interp1(tsim, xsim, t_anim); %x_anim doesn't run in airborne
-x_anim = xsim'; % transpose so that xsim is 2xN (N = number of timesteps)
+x_anim = interp1(anim_table_unique.tsim, anim_table_unique.xsim, t_anim); %x_anim doesn't run in airborne
+x_anim = x_anim'; % transpose so that xsim is 5xN (N = number of timesteps)
  
 animate_robot(x_anim(1:2,:),params,'trace_cart_com',false,...
-'trace_pend_com',false,'trace_pend_tip',false,'video',true);
+    'trace_pend_com',false,'trace_pend_tip',false,'video',true);
  
  fprintf('Done passive simulation.\n');
 
@@ -124,7 +150,7 @@ dx = zeros(numel(x),1);
 nq = numel(x)/2;    % assume that x = [q;q_dot];
 q_dot = x(nq+1:2*nq);
 
-tau = params.model.dyn.tau_mw;
+%tau = params.model.dyn.tau_mw;
 % tau = kd*params.model.dyn.tau_mw*(theta_d-x(1));
 
 % if t > 1 

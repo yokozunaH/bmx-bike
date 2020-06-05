@@ -70,6 +70,7 @@ while twrite < params.sim.tfinal
     % time between this write and next write 
     tspan = [twrite, twrite+ dt]; 
     
+    
     % analog plant
     %tspan_passive = t_curr:params.sim.dt:params.sim.tfinal;
     switch params.sim.trick
@@ -78,6 +79,7 @@ while twrite < params.sim.tfinal
         case 'Wheelie'
             [tseg, xseg, ~, ~, ie] = ode45(@(t,x) robot_dynamics_constraints(t,x,tau), tspan, x_IC', options);
     end
+    
     
     % state and sensor measurements at the time a read was made 
     tread = tseg(end) - params.control.delay;
@@ -88,7 +90,7 @@ while twrite < params.sim.tfinal
     dtheta_bw = xread(9);   % Angular Velocity of back wheel
     theta_COM = xread(3);   % Angular Position of COM
     omega_est = (theta_bw-prev_theta)/params.sim.dt;    % Use encoder count to approximate angular velocity
-    prev_theta = theta_bw;      % Store last used angular position
+    prev_theta = theta_bw;      % Store last used angular position 
 
 
     currtime = tseg(end);
@@ -114,9 +116,8 @@ while twrite < params.sim.tfinal
  
             
         case 'Backflip' 
-%             [tau_d,eint,prevError,status] = Controller(dtheta_bw,eint,prevError,status);
-%             tau = -Motor(tau_d,dtheta_bw); 
-            tau = -2.5;
+            [tau_d,eint,prevError,status] = Controller(dtheta_bw,eint,prevError,status);
+            tau = Motor(tau_d,dtheta_bw); 
             %{
             if theta_COM > 0
                 tau = 0; 
@@ -127,8 +128,7 @@ while twrite < params.sim.tfinal
                 status = "On Ground";
             end
             %}
-
-            %tau = params.model.dyn.tau_bw * 0.05;
+            
     end
     % Limit torque to feasible values
     if tau> 2.5
@@ -165,7 +165,6 @@ while twrite < params.sim.tfinal
                 if  twrite < params.sim.tfinal 
                 
                     switch params.sim.constraints
-
                         case ['flat_ground'] %both wheels are on the ground
                             if x_IC(1)+params.model.geom.bw_fw.l > params.model.geom.ramp.center.x
                                 disp("FW is on the ramp, shut off control!")
@@ -174,7 +173,9 @@ while twrite < params.sim.tfinal
                                 params.sim.constraints = ['fw_ramp'];
                                 t_curr = twrite; 
                                 break %Go to simulation without control
+                            
                             end
+                        
                     end
                     
                 end
@@ -215,11 +216,13 @@ while twrite < params.sim.tfinal
                     end
                           
                 end
-        end         
+        end    
+            
 end
 
 
 %% Simulation without controller structure for backflip
+
 while params.sim.tfinal - t_curr > params.sim.dt
         
     tspan_passive = t_curr:params.sim.dt:params.sim.tfinal;
@@ -682,54 +685,5 @@ switch params.sim.trick
  
  end % end of robot_events
 
-
-%% Control the unstable equilibrium with LQR
-% A = upright_state_matrix(params);
-% B = upright_input_matrix(params);
-% 
-% % numerical verify the rank of the controllability matrix:
-% Co = [B, A*B, (A^2)*B, (A^3)*B];
-% fprintf('rank(Co) = %d.\n',rank(Co));
-% 
-% % control design: weights Q and R:
-% Q = diag([5000,100,1,1]);    % weight on regulation error
-% R = 1;                  % weight on control effort
-% 
-% % compute and display optimal feedback gain matrix K:
-% K = lqr(A,B,Q,R);
-% buf = '';
-% for i = 1:size(K,2)
-%     buf = [buf,'%5.3f '];
-% end
-% buf = [buf,'\n'];
-% fprintf('LQR: K = \n');
-% fprintf(buf,K');
-% 
-% % we could ask what are the eigenvalues of the closed-loop system:
-% eig(A - B*K)
-% 
-% % add K to our struct "params":
-% params.control.inverted.K = K;
-% 
-% % Simulate the robot under this controller:
-% tspan_stabilize = 0:params.sim.dt:5;
-% [tsim_stabilize, xsim_stabilize] = ode45(@(t,x) robot_dynamics(...
-%     t,x,0,params,'controller','stabilize'),...
-%     tspan_stabilize, x_IC');
-% 
-% % tranpose xsim_passive so that it is 4xN (N = number of timesteps):
-% xsim_stabilize = xsim_stabilize'; % required by animate_robot.m
-% 
-% figure;
-% subplot(2,1,1), plot(tsim_stabilize,xsim_stabilize(1,:),'b-',...
-%                      tsim_stabilize,xsim_stabilize(2,:),'r-','LineWidth',2);
-% subplot(2,1,2), plot(tsim_stabilize,xsim_stabilize(3,:),'b:',...
-%                      tsim_stabilize,xsim_stabilize(4,:),'r:','LineWidth',2);
-% pause(1); % helps prevent animation from showing up on the wrong figure
-% 
-% 
-% animate_robot(xsim_stabilize(1:2,:),params,'trace_cart_com',true,...
-%     'trace_pend_com',true,'trace_pend_tip',true,'video',true);
-% fprintf('Done passive simulation.\n');
 
 end
