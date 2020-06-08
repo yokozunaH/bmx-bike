@@ -1,0 +1,1 @@
+ESTOP function file for the robot. It is a input based interrupt with the highest priority.
