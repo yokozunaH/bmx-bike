@@ -258,6 +258,7 @@ yline(0);
 
 
 %Background image
+<<<<<<< HEAD:Main Simulation/plot_robot.m
 % I = imread('bike_imgs/mario_kart.jpg'); 
 % h = image([5 15],[10 0],I); 
 % uistack(h,'bottom')

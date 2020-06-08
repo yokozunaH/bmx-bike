@@ -212,8 +212,8 @@ end
 
 
 %% Simulation without controller structure for backflip
-
-while params.sim.tfinal - t_curr > params.sim.dt
+if params.sim.trick == "Backflip"
+    while params.sim.tfinal - t_curr > params.sim.dt
         
     tspan_passive = t_curr:params.sim.dt:params.sim.tfinal;
     tau = 0; %turn off torque for ramp
@@ -324,9 +324,10 @@ while params.sim.tfinal - t_curr > params.sim.dt
                     end
                     
                 end
-                
-        end         
-end
+
+        end               
+    end
+end 
 
 
  %% Plotting and Animation 
