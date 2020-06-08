@@ -1,6 +1,28 @@
 # BMX Bike Robot Team Repo
 
-## Get you Computer set up:
+
+## Folder Structure
+
+-  Main Simulation: Matlab code with backflip and wheelie simulation code 
+-  MW Simulation: Matlab code with momentum wheel balancing simulation
+-  Hardware E-Stop: C code implementing software hardware e-stop
+-  Hardware Motor Control: C library to use ESC to control motors
+-  Winter 2020: Libraries for sensors and motor used Winter 2020 
+
+Videos of the animations in the team Google Drive. 
+
+## Instruction to run simulations
+
+1. Clone repository 
+
+2. Initialize parameters in init_params.m for both simulations (this where you can switch between tricks for the main simulation)
+
+3. Set controller gains and set points inside Controller.m
+
+4. Run main.m 
+
+
+## Instruction to develop the project:
 
 1. Follow these [instructions](https://github.com/dlynch7/Tiva_Make#tiva_make) to get all of the stuff you need to build the source code. This is a separate directory from the actual project folder.
 
