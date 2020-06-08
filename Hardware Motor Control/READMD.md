@@ -1,1 +1,1 @@
-This is the demo code for showing the function of the motor, ESC, encoder, and ESTOP. You will need all the included files metioned in this main file to run the code. 
+This is the demo code for showing the function of the motor, ESC, encoder, and ESTOP. You will need all the included files metioned in this main file to run the code. They are located under Winter2020 folder.
