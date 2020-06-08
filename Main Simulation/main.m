@@ -43,6 +43,7 @@ status = "NA"; %Used for debugging purposes for controller
 tau = 0; %initial torque command 
 voltage_d = 0; %desired voltage input to motor
 alltau = []; % used for graphing commanded torque
+alldtheta_bw = []; %Used for graphing back wheel velocity
 
 % create a place for constraint forces populated in
 % robot_dynamic_constraints function
@@ -138,6 +139,7 @@ while twrite < params.sim.tfinal
     
     for i = 1:counter
         alltau = [alltau;tau]; % build up vector of all tau commands for plotting
+        alldtheta_bw = [alldtheta_bw;dtheta_bw]; %build up vector for back wheel velocites for plotting
     end
 
     % variables for plotting 
@@ -336,44 +338,79 @@ end
  xplot = xsim';
  disp(max(xsim(2,:)))
  
- %Plot the y position of the bike and time
- subplot(3,1,1), plot(tsim,xplot(2,:),'r-')
- yline(0.3)
- xlabel('Time (s)')
- ylabel('Y position (m)') 
- set(gca,'FontSize',12)
- title('Y position vs Time ','FontSize',12)
-  
- % plot the velocity of the back wheel (rad/s) and time
- subplot(3,1,2), plot(tsim,-1*xplot(9,:),'b-')
- xlabel('Time (s)')
- ylabel('Back wheel Velocity (rad/s)') 
- set(gca,'FontSize',12)
- title('Back wheel velocity vs time','FontSize',12)
- 
- % plot the magnitude of the bike's velocity and time
- vel_mag = sqrt(xplot(6,:).^2 + xplot(7,:).^2);
- subplot(3,1,3), plot(tsim,vel_mag,'r:','LineWidth',2);
- xlabel('Time (s)')
- ylabel('Linear velocity of bike (m/s)')
- set(gca,'FontSize',12)
- title('Linear velocity of bike vs Time','FontSize',12)
- 
-figure(2);
- %Plot the angular velocity of the bike and time
- subplot(2,1,1), plot(tsim, xplot(8,:),'b-')
- xlabel('Time (s)')
- ylabel('Angular velocity of bike (rad/s)') 
- set(gca,'FontSize',12)
- title('Angular velocity of bike vs Time','FontSize',12)
- 
- % plot commanded tau values
- alltau(numel(tsim)) = 0;
- subplot(2,1,2), plot(tsim,-1*alltau,'r:','LineWidth',2);
- xlabel('Time (s)')
- ylabel('Torque (Nm)')
- set(gca,'FontSize',12)
- title('Commanded Torque to Back Wheel vs Time','FontSize',12)
+ switch params.sim.trick
+     
+     case 'Backflip'
+         
+         %Plot the y position of the bike and time
+         subplot(3,1,1), plot(tsim,xplot(2,:),'r-')
+         yline(0.3)
+         xlabel('Time (s)')
+         ylabel('Y position (m)') 
+         set(gca,'FontSize',12)
+         title('Y position vs Time ','FontSize',12)
+
+         % plot the velocity of the back wheel (rad/s) and time
+         subplot(3,1,2), plot(tsim,-1*xplot(9,:),'b-')
+         xlabel('Time (s)')
+         ylabel('Back wheel Velocity (rad/s)') 
+         set(gca,'FontSize',12)
+         title('Back wheel velocity vs time','FontSize',12)
+
+         % plot the magnitude of the bike's velocity and time
+         vel_mag = sqrt(xplot(6,:).^2 + xplot(7,:).^2);
+         subplot(3,1,3), plot(tsim,vel_mag,'r:','LineWidth',2);
+         xlabel('Time (s)')
+         ylabel('Linear velocity of bike (m/s)')
+         set(gca,'FontSize',12)
+         title('Linear velocity of bike vs Time','FontSize',12)
+
+        figure(2);
+         %Plot the angular velocity of the bike and time
+         subplot(2,1,1), plot(tsim, xplot(8,:),'b-')
+         xlabel('Time (s)')
+         ylabel('Angular velocity of bike (rad/s)') 
+         set(gca,'FontSize',12)
+         title('Angular velocity of bike vs Time','FontSize',12)
+
+         % plot commanded tau values
+         alltau(numel(tsim)) = 0;
+         subplot(2,1,2), plot(tsim,-1*alltau,'r:','LineWidth',2);
+         xlabel('Time (s)')
+         ylabel('Torque (Nm)')
+         set(gca,'FontSize',12)
+         title('Commanded Torque to Back Wheel vs Time','FontSize',12)
+         
+     case 'Wheelie'
+         %Plot center of mass angle vs time
+         xplot3p = xplot(3,:);
+         subplot(3,1,1), plot(tsim(1:end-50),xplot3p(1:end-50),'r:','LineWidth',2);
+         xlabel('time')
+         ylabel('angle')
+         set(gca,'FontSize',11)
+         title('Center of Mass Angle vs Time','FontSize',12)
+         
+         % plot commanded tau values
+         alltau(numel(tsim)) = 0;
+         subplot(3,1,2), plot(tsim(1:end-50),alltau(1:end-50),'r:','LineWidth',2);
+         xlabel('time')
+         ylabel('torque')
+         set(gca,'FontSize',11)
+         title('Commanded Torque to Back Wheel vs Time','FontSize',12)
+         alldtheta_bw(numel(tsim)) = 0;
+         
+         %Plot wheel angular velocity and time
+         subplot(3,1,3), plot(tsim(1:end-50),alldtheta_bw(1:end-50),'r:','LineWidth',2);
+         xlabel('time')
+         ylabel('angular velocity')
+         set(gca,'FontSize',11)
+         title('Angular Velocity of Back Wheel vs Time','FontSize',12)
+         
+         
+ end
+        
+     
+
  
  pause(1); % helps prevent animation from showing up on the wrong figure
  

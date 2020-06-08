@@ -92,5 +92,5 @@ function params = init_params
     params.sim.constraints = ['flat_ground']; % [back wheel, front wheel]
     
     %Change simulation to wheelie or backflip trick
-    params.sim.trick = 'Backflip'; %'Backflip';
+    params.sim.trick = 'Wheelie'; %'Backflip';
 end

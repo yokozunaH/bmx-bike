@@ -39,10 +39,6 @@ addParameter(p, 'new_fig', false); % if true, plot will be on a new figure
 % Step 3: parse the inputs:
 parse(p, q, params, varargin{:});
 
-% Verification: display the results of parsing:
-% disp(p.Results)
-
-
 %% Compute the corners of the bike's body, clockwise from top left corner
 % First compute the cart's home position (q(1) = 0):
 body.home.upp_left.x    = -0.5*params.model.geom.body.w;
@@ -79,10 +75,6 @@ theta_com = q(3);
 theta_bw = q(4);
 theta_fw = q(5);
 
-% if x_bf > 10
-%     x_bf = 5 + 10*((x_bf-10)/18);
-% end
-
 g_wbf = [[cos(0), -sin(0), x_bf]; 
           [sin(0), cos(0), y_bf];
           [0, 0, 1]];
@@ -115,9 +107,6 @@ T_body = g_wbf*g_bf_com*g_rot_rev;
 comX = T_body(1,3);
 comY = T_body(2,3);
 
-% T_body_trans = [cos(0), -sin(0), q(1);
-%                 sin(0),  cos(0), q(2);
-%                      0,       0,   1];
 
 body.curr.corners = T_body*body.home.corners;
 
@@ -160,46 +149,20 @@ wheel_fw.curr.radius = T_w_fw*wheel.radius;
 
 wheel_bw.curr.center = T_w_bw*wheel.center;
 wheel_bw.curr.radius = T_w_bw*wheel.radius;
-%% Compute the bike legs
-
-%compute corners of leg at home
-% leg.home.low_right.x   =  0.5*params.model.geom.leg.w;
-% leg.home.low_right.y   =  -0.5*params.model.geom.leg.l;
-% 
-% leg.home.low_left.x   =  -0.5*params.model.geom.leg.w;
-% leg.home.low_left.y   =  -0.5*params.model.geom.leg.l;
-% 
-% leg.home.upp_right.x   =  0.5*params.model.geom.leg.w;
-% leg.home.upp_right.y   =  0.5*params.model.geom.leg.l;
-% 
-% leg.home.upp_left.x   =  -0.5*params.model.geom.leg.w;
-% leg.home.upp_left.y   =  0.5*params.model.geom.leg.l;
-% 
-% 
-% leg.home.corners = horzcat([leg.home.upp_left.x; leg.home.upp_left.y;   1],...
-%                             [leg.home.upp_right.x; leg.home.upp_right.y; 1],...
-%                             [leg.home.low_right.x; leg.home.low_right.y; 1],...
-%                             [leg.home.low_left.x;  leg.home.low_left.y;  1]);
-%                                               
-% leg_bw.corners = T_body_trans*T_tran_bw*T_rot_com_legs*T_tran_wheel_leg*leg.home.corners;                       
-%                         
-% leg_fw.corners = T_body_trans*T_tran_fw*T_rot_com_legs*T_tran_wheel_leg*leg.home.corners;
-            
+       
 %% Display the Bike
 if p.Results.new_fig
     figure;
 end
 
-%hgtransform
+%Transform to rotate image
 theta = -mod(round((180/pi)*theta_com),360);
 tform = affine2d([ ...
     cosd(theta) sind(theta) 0;...
     -sind(theta) cosd(theta) 0; ...
     0 0 1]);
-%s = strcat("bike_imgs/bike_",num2str(mod(round((180/pi)*theta_com),360)),".png");
 
 %load the image
-%[img, map, alphachannel] = imread(s);
 [img, map, alphachannel] = imread("bike_imgs/bike_new.png");
 %rotate the image
 img =  imwarp(img,tform);
@@ -216,6 +179,9 @@ image(img_x,img_y,img,'AlphaData', alphachannel);
 set(gca,'YDir','normal')
 grid on;
 hold on;
+
+%Uncomment this and comment image block to use shape for bike body instead
+%of body
 % fill(leg_bw.corners(1,:),leg_bw.corners(2,:),params.viz.colors.leg);
 % fill(leg_fw.corners(1,:),leg_fw.corners(2,:),params.viz.colors.leg);
 
@@ -258,12 +224,12 @@ yline(0);
 
 
 %Background image
-<<<<<<< HEAD:Main Simulation/plot_robot.m
+%Mario Kart mode 
 % I = imread('bike_imgs/mario_kart.jpg'); 
 % h = image([5 15],[10 0],I); 
 % uistack(h,'bottom')
+
 I = imread('bike_imgs/background_bmx.jpg'); 
-%set(gca,'YDir','reverse')
 I = imresize(I, 1); 
 h = image([-1 31],[5 -0.475],I); 
 uistack(h,'bottom')
@@ -275,6 +241,8 @@ if params.viz.tracking
 else
     axis(params.viz.axis_lims);
 end
+
+%Mario Kart mode 
 % if q(1) > 8
 % %     axis([5,15,0,10])
 % %       axis([10-(q(1)-8)*(5/20),10+(q(1)-8)*(5/20),5-(q(1)-8)*(5/20),5+(q(1)-8)*(5/20)])
