@@ -10,12 +10,12 @@
 
 volatile int ledFlag = 0;
 
+// ESTOP ISR, its job is to raise the ledFlag if it has not been raised
 void ESTOPISR(void)
 {
     uint32_t status=0;
     status = GPIOIntStatus(GPIO_PORTF_BASE,true);
     GPIOIntClear(GPIO_PORTF_BASE,status);
-//    GPIOIntClear(GPIO_PORTF_BASE, GPIO_INT_PIN_4);
     if (ledFlag == 0)
     {
         ledFlag = 1;
@@ -23,6 +23,7 @@ void ESTOPISR(void)
 
 }
 
+// ESTOP interrupt configuration. Largely similar to other input based interrupt, but with the highest priority.
 void ConfigureESTOP(void)
 {
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
@@ -30,7 +31,7 @@ void ConfigureESTOP(void)
     {
     }
     GPIOPinTypeGPIOInput(GPIO_PORTF_BASE, GPIO_PIN_4);
-    //???
+
     GPIOPadConfigSet(GPIO_PORTF_BASE,GPIO_PIN_4,GPIO_STRENGTH_2MA,GPIO_PIN_TYPE_STD_WPU);
 
     GPIOPinTypeGPIOOutput(GPIO_PORTF_BASE, GPIO_PIN_1);
@@ -40,6 +41,7 @@ void ConfigureESTOP(void)
 
     GPIOIntRegister(GPIO_PORTF_BASE,ESTOPISR);
 
+    // Setting the priority of this interrupt to the highest, so the stopping flag will be raised in every other place in the code as soon as possible.
     IntPrioritySet(INT_GPIOF, 0);
 
     IntEnable(INT_GPIOF);
